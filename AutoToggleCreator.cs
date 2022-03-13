@@ -17,8 +17,7 @@ public class AutoToggleCreator : EditorWindow
     static bool parameterSave;
     static bool defaultOn;
     public string saveDir;
-    bool showPosition = false;
-    string controllerDir;
+    bool pressCreate = false;
 
     [MenuItem("Tools/Cascadian/AutoToggleCreator")]
 
@@ -75,64 +74,35 @@ public class AutoToggleCreator : EditorWindow
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space(15);
-        EditorGUI.BeginDisabledGroup((myAnimator && controller && vrcParam && vrcMenu) != true);
 
-        //Toggle Objects Creator
+        EditorGUILayout.BeginHorizontal();
+        //Toggle to save VRCParameter values
+        parameterSave = (bool)EditorGUILayout.ToggleLeft("Save VRC Parameters?", parameterSave, EditorStyles.boldLabel);
+
+        //defaultOn = (bool)EditorGUILayout.ToggleLeft("Default is On?", defaultOn, EditorStyles.boldLabel);
+        EditorGUILayout.EndHorizontal();
+
+        GUILayout.Space(10f);
+
+        //Toggle Object List
+        GUILayout.Label("Objects to Toggle On and Off:", EditorStyles.boldLabel);
+        ScriptableObject target = this;
+        SerializedObject so = new SerializedObject(target);
+        SerializedProperty toggleObjectsProperty = so.FindProperty("toggleObjects");
+        EditorGUILayout.PropertyField(toggleObjectsProperty, true);
+        GUILayout.Space(10f);
+
+        pressCreate = GUILayout.Button("Create Toggles!", GUILayout.Height(40f));
+        if (pressCreate)
         {
-            showPosition = EditorGUILayout.BeginFoldoutHeaderGroup(showPosition, "GameObject Toggles");
-            EditorGUILayout.Space(10);
-            if (showPosition)
-            {
-                EditorGUILayout.BeginHorizontal();
-                //Toggle to save VRCParameter values
-                parameterSave = (bool)EditorGUILayout.ToggleLeft("Save VRC Parameters?", parameterSave, EditorStyles.boldLabel);
-
-                //defaultOn = (bool)EditorGUILayout.ToggleLeft("Default is On?", defaultOn, EditorStyles.boldLabel);
-                EditorGUILayout.EndHorizontal();
-
-                GUILayout.Space(10f);
-
-                //Toggle Object List
-                GUILayout.Label("Objects to Toggle On and Off:", EditorStyles.boldLabel);
-                ScriptableObject target = this;
-                SerializedObject so = new SerializedObject(target);
-                SerializedProperty toggleObjectsProperty = so.FindProperty("toggleObjects");
-                EditorGUILayout.PropertyField(toggleObjectsProperty, true);
-                GUILayout.Space(10f);
-
-                if (GUILayout.Button("Create Toggles!", GUILayout.Height(40f)))
-                {
-/*                    controllerDir = AssetDatabase.GetAssetPath(controller);
-                    controllerDir = controllerDir.Substring(0, controllerDir.Length - controller.name.Length - 11);
-                    saveDir = controllerDir + "ToggleAnimations/";
-                    //Check to see if path exists. If not, create it.
-                    if (!Directory.Exists(saveDir))
-                    {
-                        Directory.CreateDirectory(saveDir);
-                    }*/
-                    setSaveDir(); //Sets the save directory
-                    CreateClips(); //Creates the Animation Clips needed for toggles.
-                    ApplyToAnimator(); //Handles making toggle bool property, layer setup, states and transitions.
-                    MakeVRCParameter(); //Makes a new VRCParameter list, populates it with existing parameters, then adds new ones for each toggle.
-                    MakeVRCMenu();
-                    Postprocessing();
-                }
-                so.ApplyModifiedProperties();
-            }
-            if (!Selection.activeTransform)
-            {
-                showPosition = false;
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
+            setSaveDir(); //Sets the save directory
+            CreateClips(); //Creates the Animation Clips needed for toggles.
+            ApplyToAnimator(); //Handles making toggle bool property, layer setup, states and transitions.
+            MakeVRCParameter(); //Makes a new VRCParameter list, populates it with existing parameters, then adds new ones for each toggle.
+            MakeVRCMenu();
+            Postprocessing();
         }
-
-        //Shapekey Gesture Creator
-        {
-
-        }
-
-        EditorGUI.EndDisabledGroup();
-
+        so.ApplyModifiedProperties();
     }
 
     private void CreateClips()
@@ -175,19 +145,24 @@ public class AutoToggleCreator : EditorWindow
         for (int i = 0; i < toggleObjects.Length; i++)
         {
             bool existParam = doesNameExistParam(toggleObjects[i].name + "Toggle", controller.parameters);
-            bool existLayer = doesNameExistLayer(toggleObjects[i].name, controller.layers);
-            
             //Check if a parameter already exists with that name. If so, Ignore adding parameter.
             if (existParam == false)
             {
-                controller.AddParameter(toggleObjects[i].name + "Toggle", UnityEngine.AnimatorControllerParameterType.Bool);
+                controller.AddParameter(toggleObjects[i].name + "Toggle", AnimatorControllerParameterType.Bool);
             }
 
             //Check if a layer already exists with that name. If so, Ignore adding layer.
-            if (existLayer == false)
+            AnimatorControllerLayer currentLayer = FindAnimationLayer(controller, toggleObjects[i].name);
+            if (currentLayer == null)
             {
-                controller.AddLayer(toggleObjects[i].name.Replace(".","_"));
-                AnimatorControllerLayer currentLayer = controller.layers[controller.layers.Length - 1];
+                AnimatorControllerLayer layer = new AnimatorControllerLayer
+                {
+                    name = toggleObjects[i].name.Replace(".", "_"),
+                    defaultWeight = 1f,
+                    stateMachine = new AnimatorStateMachine() // Make sure to create a StateMachine as well, as a default one is not created
+                };
+                controller.AddLayer(layer);
+                currentLayer = FindAnimationLayer(controller, toggleObjects[i].name);
 
                 //Creating On and Off(Empty) states
                 AnimatorState stateOn = new AnimatorState();
@@ -203,9 +178,7 @@ public class AutoToggleCreator : EditorWindow
                 //Adding created states to controller layer
                 currentLayer.stateMachine.AddState(stateOn, new Vector3(260, 120, 0));
                 currentLayer.stateMachine.AddState(stateOff, new Vector3(520, 120, 0));
-                //Adding created states to controller layer
-
-
+  
                 //Transition states
                 AnimatorStateTransition OnOff = new AnimatorStateTransition();
                 OnOff.name = "OnOff";
@@ -221,18 +194,9 @@ public class AutoToggleCreator : EditorWindow
                 OffOn.destinationState = currentLayer.stateMachine.states[0].state;
                 currentLayer.stateMachine.states[1].state.AddTransition(OffOn);
 
-                //AssetDatabase.AddObjectToAsset(stateOn, AssetDatabase.GetAssetPath(controller));
-                //AssetDatabase.AddObjectToAsset(stateOff, AssetDatabase.GetAssetPath(controller));
                 AssetDatabase.SaveAssets();
 
             }
-
-            //Set Layer Weight
-            UnityEditor.Animations.AnimatorControllerLayer[] layers = controller.layers;
-            layers[controller.layers.Length - 1].defaultWeight = 1;
-            controller.layers = layers;
-
-
         }
     }
 
@@ -287,8 +251,6 @@ public class AutoToggleCreator : EditorWindow
         }
         //Apply new list to VRCExpressionParameter asset
         vrcParam.parameters = newList;
-
-
     }
 
     private void MakeVRCMenu()
@@ -356,18 +318,6 @@ public class AutoToggleCreator : EditorWindow
         return false;
     }
 
-    private bool doesNameExistLayer(string name, AnimatorControllerLayer[] array)
-    {
-        for (int i = 0; i < array.Length; i++)
-        {
-            if (array[i].name == name)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private string GetGameObjectPath(Transform transform)
     {
         string path = transform.name;
@@ -378,9 +328,22 @@ public class AutoToggleCreator : EditorWindow
         }
         return path;
     }
-
-
+    public AnimatorControllerLayer FindAnimationLayer(AnimatorController controller, string name)
+    {
+        //controller.layers[0].name;
+        foreach (AnimatorControllerLayer layer in controller.layers)
+        {
+            if (layer.name == name)
+            {
+                return layer;
+            }
+        }
+        return null;
+    }
 }
+
+
+
 
 public struct ToggleObjects
 {
