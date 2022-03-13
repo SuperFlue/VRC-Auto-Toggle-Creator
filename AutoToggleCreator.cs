@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using UnityEditor;
 using UnityEngine;
+using System.Collections.Generic;
+using System;
 #if UNITY_EDITOR
 using static VRC.SDKBase.VRC_AvatarParameterDriver;
 using VRC.SDK3.Avatars.Components;
@@ -53,7 +55,7 @@ public class AutoToggleCreator : EditorWindow
         GUILayout.Label("FX AVATAR CONTROLLER", EditorStyles.boldLabel);
         controller = (AnimatorController)EditorGUILayout.ObjectField(controller, typeof(AnimatorController), true, GUILayout.Height(20f));
         EditorGUILayout.EndVertical();
-;
+        ;
         EditorGUILayout.BeginVertical();
         //VRCExpressionParameters
         GUILayout.Label("VRC EXPRESSION PARAMETERS", EditorStyles.boldLabel);
@@ -90,7 +92,7 @@ public class AutoToggleCreator : EditorWindow
         {
             pressCreate = GUILayout.Button("Create Toggles!", GUILayout.Height(40f));
         }
-        
+
         if (pressCreate)
         {
             setSaveDir(); //Sets the save directory
@@ -223,7 +225,7 @@ public class AutoToggleCreator : EditorWindow
         newitemlength = toggleObjects.Length;
 
         VRCExpressionParameters.Parameter[] newListFull = new VRCExpressionParameters.Parameter[ogparamlength + newitemlength];
-        
+
 
         //Add parameters that were already on the SO
         for (int i = 0; i < vrcParam.parameters.Length; i++)
@@ -255,7 +257,7 @@ public class AutoToggleCreator : EditorWindow
             else { nullcounter++; }
         }
         int finallenght = newListFull.Length - nullcounter;
-        VRCExpressionParameters.Parameter[] finalNewList = new VRCExpressionParameters.Parameter[finallenght]; 
+        VRCExpressionParameters.Parameter[] finalNewList = new VRCExpressionParameters.Parameter[finallenght];
         for (int i = 0; i < finallenght; i++)
         {
             finalNewList[i] = newListFull[i];
@@ -266,30 +268,23 @@ public class AutoToggleCreator : EditorWindow
 
     private void MakeVRCMenu()
     {
-        bool menutoggle = false;
-        for (int i = 0; i < toggleObjects.Length; i++)
+        bool menutoggleexist = false;
+        foreach (GameObject gameObject in toggleObjects)
         {
             VRCExpressionsMenu.Control controlItem = new VRCExpressionsMenu.Control();
 
-            controlItem.name = toggleObjects[i].name;
+            controlItem.name = gameObject.name;
             controlItem.type = VRCExpressionsMenu.Control.ControlType.Toggle;
             controlItem.parameter = new VRCExpressionsMenu.Control.Parameter();
-            controlItem.parameter.name = toggleObjects[i].name + "Toggle";
-            menutoggle = false;
-            for (int j = 0; j < vrcMenu.controls.Count; j++)
-            {
-                if (vrcMenu.controls[j].name == controlItem.parameter.name)
-                {
-                    menutoggle = true;
-                }
-            }
+            controlItem.parameter.name = gameObject.name + "Toggle";
 
-            if (menutoggle == false)
+            menutoggleexist = false;
+            menutoggleexist = doesNameExistVRCMenu(controlItem.name, vrcMenu.controls);
+            if (menutoggleexist == false)
             {
                 vrcMenu.controls.Add(controlItem);
             }
         }
-
     }
 
     private void setSaveDir()
@@ -319,27 +314,41 @@ public class AutoToggleCreator : EditorWindow
     {
         for (int i = 0; i < array.Length; i++)
         {
-            
+
             if (array[i].name == name)
             {
                 return true;
             }
-    
+
         }
         return false;
-    
+
     }
     private bool doesNameExistVRCParam(string name, VRCExpressionParameters.Parameter[] array)
     {
         for (int i = 0; i < array.Length; i++)
         {
-        if (!(array[i] == null))
-        {
-            if (array[i].name == name)
+            if (!(array[i] == null))
             {
-                return true;
+                if (array[i].name == name)
+                {
+                    return true;
+                }
             }
         }
+        return false;
+    }
+    private bool doesNameExistVRCMenu(string name, List<VRCExpressionsMenu.Control> controls)
+    {
+        for (int i = 0; i < controls.Count; i++)
+        {
+            if (!(controls[i] == null))
+            {
+                if (controls[i].name == name)
+                {
+                    return true;
+                }
+            }
         }
         return false;
     }
