@@ -73,7 +73,6 @@ public class AutoToggleCreator : EditorWindow
         //Toggle to save VRCParameter values
         parameterSave = (bool)EditorGUILayout.ToggleLeft("Save VRC Parameters?", parameterSave, EditorStyles.boldLabel);
 
-        //defaultOn = (bool)EditorGUILayout.ToggleLeft("Default is On?", defaultOn, EditorStyles.boldLabel);
         EditorGUILayout.EndHorizontal();
 
         GUILayout.Space(10f);
@@ -107,13 +106,13 @@ public class AutoToggleCreator : EditorWindow
 
     private void CreateClips()
     {
-        for (int i = 0; i < toggleObjects.Length; i++)
+        foreach (GameObject gameObject in toggleObjects)
         {
             //Make animation clips for on and off state and set curves for game objects on and off
             AnimationClip toggleClipOn = new AnimationClip(); //Clip for ON
 
             toggleClipOn.SetCurve
-                (GetGameObjectPath(toggleObjects[i].transform).Substring(myAnimator.gameObject.name.Length+1),
+                (GetGameObjectPath(gameObject.transform).Substring(myAnimator.gameObject.name.Length + 1),
                 typeof(GameObject),
                 "m_IsActive",
                 new AnimationCurve(new Keyframe(0, 1, 0, 0),
@@ -123,7 +122,7 @@ public class AutoToggleCreator : EditorWindow
             AnimationClip toggleClipOff = new AnimationClip(); //Clip for OFF
 
             toggleClipOff.SetCurve
-                (GetGameObjectPath(toggleObjects[i].transform).Substring(myAnimator.gameObject.name.Length+1),
+                (GetGameObjectPath(gameObject.transform).Substring(myAnimator.gameObject.name.Length + 1),
                 typeof(GameObject),
                 "m_IsActive",
                 new AnimationCurve(new Keyframe(0, 0, 0, 0),
@@ -131,66 +130,85 @@ public class AutoToggleCreator : EditorWindow
                 );
 
             //Save on animation clips (Off should not be needed?)
-            AssetDatabase.CreateAsset(toggleClipOn, saveDir  + $"{toggleObjects[i].name}-On.anim");
-            AssetDatabase.CreateAsset(toggleClipOff, saveDir  + $"{toggleObjects[i].name}-Off.anim");
+            AssetDatabase.CreateAsset(toggleClipOn, saveDir + $"{gameObject.name}-On.anim");
+            AssetDatabase.CreateAsset(toggleClipOff, saveDir + $"{gameObject.name}-Off.anim");
             AssetDatabase.SaveAssets();
-
         }
     }
 
     private void ApplyToAnimator()
     {
-        for (int i = 0; i < toggleObjects.Length; i++)
+        bool initParamExist = doesNameExistParam("TrackingType", controller.parameters);
+        //Check if a parameter already exists with that name. If so, Ignore adding parameter.
+        if (initParamExist == false)
         {
-            bool existParam = doesNameExistParam(toggleObjects[i].name + "Toggle", controller.parameters);
+            controller.AddParameter("TrackingType", AnimatorControllerParameterType.Int);
+        }
+        foreach (GameObject gameObject in toggleObjects)
+        {
+            bool existParam = doesNameExistParam(gameObject.name + "Toggle", controller.parameters);
             //Check if a parameter already exists with that name. If so, Ignore adding parameter.
             if (existParam == false)
             {
-                controller.AddParameter(toggleObjects[i].name + "Toggle", AnimatorControllerParameterType.Bool);
+                controller.AddParameter(gameObject.name + "Toggle", AnimatorControllerParameterType.Bool);
             }
 
             //Check if a layer already exists with that name. If so, Ignore adding layer.
-            AnimatorControllerLayer currentLayer = FindAnimationLayer(controller, toggleObjects[i].name);
+            AnimatorControllerLayer currentLayer = FindAnimationLayer(controller, gameObject.name);
             if (currentLayer == null)
             {
                 AnimatorControllerLayer layer = new AnimatorControllerLayer
                 {
-                    name = toggleObjects[i].name.Replace(".", "_"),
+                    name = gameObject.name.Replace(".", "_"),
                     defaultWeight = 1f,
                     stateMachine = new AnimatorStateMachine() // Make sure to create a StateMachine as well, as a default one is not created
                 };
                 controller.AddLayer(layer);
-                currentLayer = FindAnimationLayer(controller, toggleObjects[i].name);
+                currentLayer = FindAnimationLayer(controller, gameObject.name);
+
+                //Create a state that can wait for init (prevents toggles being on/off when someone loads their avatar)
+                AnimatorState Idle = new AnimatorState();
+                Idle.name = "Idle-WaitForInit";
+                Idle.writeDefaultValues = false;
 
                 //Creating On and Off(Empty) states
                 AnimatorState stateOn = new AnimatorState();
-                stateOn.name = $"{toggleObjects[i].name} On";
-                stateOn.motion = (Motion)AssetDatabase.LoadAssetAtPath(saveDir + $"/{toggleObjects[i].name}-On.anim", typeof(Motion));
+                stateOn.name = $"{gameObject.name} On";
+                stateOn.motion = (Motion)AssetDatabase.LoadAssetAtPath(saveDir + $"/{gameObject.name}-On.anim", typeof(Motion));
                 stateOn.writeDefaultValues = false;
 
                 AnimatorState stateOff = new AnimatorState();
-                stateOff.name = $"{toggleObjects[i].name} Off";
-                stateOff.motion = (Motion)AssetDatabase.LoadAssetAtPath(saveDir + $"/{toggleObjects[i].name}-Off.anim", typeof(Motion));
+                stateOff.name = $"{gameObject.name} Off";
+                stateOff.motion = (Motion)AssetDatabase.LoadAssetAtPath(saveDir + $"/{gameObject.name}-Off.anim", typeof(Motion));
                 stateOff.writeDefaultValues = false;
 
                 //Adding created states to controller layer
+                currentLayer.stateMachine.AddState(Idle, new Vector3(260, 240, 0));
                 currentLayer.stateMachine.AddState(stateOn, new Vector3(260, 120, 0));
                 currentLayer.stateMachine.AddState(stateOff, new Vector3(520, 120, 0));
-  
+
                 //Transition states
+                // Add init wait transition
+                AnimatorStateTransition InitWait = new AnimatorStateTransition();
+                InitWait.name = "InitWait";
+                InitWait.hasExitTime = false;
+                InitWait.AddCondition(AnimatorConditionMode.NotEqual, 0, "TrackingType");
+                InitWait.destinationState = currentLayer.stateMachine.states[1].state;
+                currentLayer.stateMachine.states[0].state.AddTransition(InitWait);
+
                 AnimatorStateTransition OnOff = new AnimatorStateTransition();
                 OnOff.name = "OnOff";
                 OnOff.hasExitTime = false;
-                OnOff.AddCondition(AnimatorConditionMode.If, 0, toggleObjects[i].name + "Toggle");
-                OnOff.destinationState = currentLayer.stateMachine.states[1].state;
-                currentLayer.stateMachine.states[0].state.AddTransition(OnOff);
+                OnOff.AddCondition(AnimatorConditionMode.If, 0, gameObject.name + "Toggle");
+                OnOff.destinationState = currentLayer.stateMachine.states[2].state;
+                currentLayer.stateMachine.states[1].state.AddTransition(OnOff);
 
                 AnimatorStateTransition OffOn = new AnimatorStateTransition();
                 OffOn.name = "OffOn";
                 OffOn.hasExitTime = false;
-                OffOn.AddCondition(AnimatorConditionMode.IfNot, 0, toggleObjects[i].name + "Toggle");
-                OffOn.destinationState = currentLayer.stateMachine.states[0].state;
-                currentLayer.stateMachine.states[1].state.AddTransition(OffOn);
+                OffOn.AddCondition(AnimatorConditionMode.IfNot, 0, gameObject.name + "Toggle");
+                OffOn.destinationState = currentLayer.stateMachine.states[1].state;
+                currentLayer.stateMachine.states[2].state.AddTransition(OffOn);
 
                 AssetDatabase.SaveAssets();
 
@@ -338,14 +356,10 @@ public class AutoToggleCreator : EditorWindow
     }
 }
 
-
-
-
 public struct ToggleObjects
 {
     public GameObject ToggleObject;
     public bool saveParameter;
-    public bool onByDefault;
 }
 
 #endif
