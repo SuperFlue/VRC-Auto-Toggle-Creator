@@ -43,35 +43,29 @@ public class AutoToggleCreator : EditorWindow
         }
         EditorGUILayout.Space(10);
 
-        EditorGUILayout.BeginHorizontal();
         EditorGUILayout.BeginVertical();
         //Avatar Animator
         GUILayout.Label("AVATAR ANIMATOR", EditorStyles.boldLabel);
-        myAnimator = (Animator)EditorGUILayout.ObjectField(myAnimator, typeof(Animator), true, GUILayout.Height(40f));
+        myAnimator = (Animator)EditorGUILayout.ObjectField(myAnimator, typeof(Animator), true, GUILayout.Height(20f));
         EditorGUILayout.EndVertical();
 
         EditorGUILayout.BeginVertical();
         //FX Animator Controller
         GUILayout.Label("FX AVATAR CONTROLLER", EditorStyles.boldLabel);
-        controller = (AnimatorController)EditorGUILayout.ObjectField(controller, typeof(AnimatorController), true, GUILayout.Height(40f));
+        controller = (AnimatorController)EditorGUILayout.ObjectField(controller, typeof(AnimatorController), true, GUILayout.Height(20f));
         EditorGUILayout.EndVertical();
-        EditorGUILayout.EndHorizontal();
-
-        EditorGUILayout.Space(15);
-
-        EditorGUILayout.BeginHorizontal();
+;
         EditorGUILayout.BeginVertical();
         //VRCExpressionParameters
         GUILayout.Label("VRC EXPRESSION PARAMETERS", EditorStyles.boldLabel);
-        vrcParam = (VRCExpressionParameters)EditorGUILayout.ObjectField(vrcParam, typeof(VRCExpressionParameters), true, GUILayout.Height(40f));
+        vrcParam = (VRCExpressionParameters)EditorGUILayout.ObjectField(vrcParam, typeof(VRCExpressionParameters), true, GUILayout.Height(20f));
         EditorGUILayout.EndVertical();
 
         EditorGUILayout.BeginVertical();
         //VRCExpressionMenu
         GUILayout.Label("VRC EXPRESISON MENU", EditorStyles.boldLabel);
-        vrcMenu = (VRCExpressionsMenu)EditorGUILayout.ObjectField(vrcMenu, typeof(VRCExpressionsMenu), true, GUILayout.Height(40f));
+        vrcMenu = (VRCExpressionsMenu)EditorGUILayout.ObjectField(vrcMenu, typeof(VRCExpressionsMenu), true, GUILayout.Height(20f));
         EditorGUILayout.EndVertical();
-        EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space(15);
 
@@ -92,14 +86,20 @@ public class AutoToggleCreator : EditorWindow
         EditorGUILayout.PropertyField(toggleObjectsProperty, true);
         GUILayout.Space(10f);
 
-        pressCreate = GUILayout.Button("Create Toggles!", GUILayout.Height(40f));
+        GUILayout.Label("Needs all items filled to proceed.", EditorStyles.helpBox);
+
+        using (new EditorGUI.DisabledScope((myAnimator && controller && vrcParam && vrcMenu) != true))
+        {
+            pressCreate = GUILayout.Button("Create Toggles!", GUILayout.Height(40f));
+        }
+        
         if (pressCreate)
         {
             setSaveDir(); //Sets the save directory
             CreateClips(); //Creates the Animation Clips needed for toggles.
             ApplyToAnimator(); //Handles making toggle bool property, layer setup, states and transitions.
             MakeVRCParameter(); //Makes a new VRCParameter list, populates it with existing parameters, then adds new ones for each toggle.
-            MakeVRCMenu();
+            MakeVRCMenu(); //Adds toggles to menu
             Postprocessing();
         }
         so.ApplyModifiedProperties();
@@ -112,7 +112,6 @@ public class AutoToggleCreator : EditorWindow
             //Make animation clips for on and off state and set curves for game objects on and off
             AnimationClip toggleClipOn = new AnimationClip(); //Clip for ON
 
-            toggleClipOn.legacy = false;
             toggleClipOn.SetCurve
                 (GetGameObjectPath(toggleObjects[i].transform).Substring(myAnimator.gameObject.name.Length+1),
                 typeof(GameObject),
@@ -123,7 +122,6 @@ public class AutoToggleCreator : EditorWindow
 
             AnimationClip toggleClipOff = new AnimationClip(); //Clip for OFF
 
-            toggleClipOff.legacy = false;
             toggleClipOff.SetCurve
                 (GetGameObjectPath(toggleObjects[i].transform).Substring(myAnimator.gameObject.name.Length+1),
                 typeof(GameObject),
@@ -278,6 +276,7 @@ public class AutoToggleCreator : EditorWindow
                 vrcMenu.controls.Add(controlItem);
             }
         }
+
     }
 
     private void setSaveDir()
@@ -297,12 +296,9 @@ public class AutoToggleCreator : EditorWindow
     private void Postprocessing()
     {
         AssetDatabase.Refresh();
-
         EditorUtility.SetDirty(controller);
-
         EditorUtility.SetDirty(vrcParam);
         EditorUtility.SetDirty(vrcMenu);
-
         AssetDatabase.SaveAssets();
     }
 
