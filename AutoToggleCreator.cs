@@ -18,7 +18,7 @@ public class AutoToggleCreator : EditorWindow
     static bool defaultOn;
     public string saveDir;
     bool showPosition = false;
-
+    string controllerDir;
 
     [MenuItem("Tools/Cascadian/AutoToggleCreator")]
 
@@ -102,6 +102,15 @@ public class AutoToggleCreator : EditorWindow
 
                 if (GUILayout.Button("Create Toggles!", GUILayout.Height(40f)))
                 {
+/*                    controllerDir = AssetDatabase.GetAssetPath(controller);
+                    controllerDir = controllerDir.Substring(0, controllerDir.Length - controller.name.Length - 11);
+                    saveDir = controllerDir + "ToggleAnimations/";
+                    //Check to see if path exists. If not, create it.
+                    if (!Directory.Exists(saveDir))
+                    {
+                        Directory.CreateDirectory(saveDir);
+                    }*/
+                    setSaveDir(); //Sets the save directory
                     CreateClips(); //Creates the Animation Clips needed for toggles.
                     ApplyToAnimator(); //Handles making toggle bool property, layer setup, states and transitions.
                     MakeVRCParameter(); //Makes a new VRCParameter list, populates it with existing parameters, then adds new ones for each toggle.
@@ -142,10 +151,6 @@ public class AutoToggleCreator : EditorWindow
                 new Keyframe(0.016666668f, 1, 0, 0))
                 );
 
-            saveDir = AssetDatabase.GetAssetPath(controller);
-            saveDir = saveDir.Substring(0, saveDir.Length - controller.name.Length - 11);
-
-
             AnimationClip toggleClipOff = new AnimationClip(); //Clip for OFF
 
             toggleClipOff.legacy = false;
@@ -157,18 +162,9 @@ public class AutoToggleCreator : EditorWindow
                 new Keyframe(0.016666668f, 0, 0, 0))
                 );
 
-            saveDir = AssetDatabase.GetAssetPath(controller);
-            saveDir = saveDir.Substring(0, saveDir.Length - controller.name.Length - 11);
-
-            //Check to see if path exists. If not, create it.
-            if (!Directory.Exists(saveDir + "ToggleAnimations/"))
-            {
-                Directory.CreateDirectory(saveDir + "ToggleAnimations/");
-            }
-
             //Save on animation clips (Off should not be needed?)
-            AssetDatabase.CreateAsset(toggleClipOn, saveDir + "ToggleAnimations/" + $"{toggleObjects[i].name}-On.anim");
-            AssetDatabase.CreateAsset(toggleClipOff, saveDir + "ToggleAnimations/" + $"{toggleObjects[i].name}-Off.anim");
+            AssetDatabase.CreateAsset(toggleClipOn, saveDir  + $"{toggleObjects[i].name}-On.anim");
+            AssetDatabase.CreateAsset(toggleClipOff, saveDir  + $"{toggleObjects[i].name}-Off.anim");
             AssetDatabase.SaveAssets();
 
         }
@@ -196,22 +192,21 @@ public class AutoToggleCreator : EditorWindow
                 //Creating On and Off(Empty) states
                 AnimatorState stateOn = new AnimatorState();
                 stateOn.name = $"{toggleObjects[i].name} On";
-                stateOn.motion = (Motion)AssetDatabase.LoadAssetAtPath(saveDir + "ToggleAnimations" + $"/{toggleObjects[i].name}-On.anim", typeof(Motion));
+                stateOn.motion = (Motion)AssetDatabase.LoadAssetAtPath(saveDir + $"/{toggleObjects[i].name}-On.anim", typeof(Motion));
                 stateOn.writeDefaultValues = false;
 
                 AnimatorState stateOff = new AnimatorState();
                 stateOff.name = $"{toggleObjects[i].name} Off";
-                stateOff.motion = (Motion)AssetDatabase.LoadAssetAtPath(saveDir + "ToggleAnimations" + $"/{toggleObjects[i].name}-Off.anim", typeof(Motion));
+                stateOff.motion = (Motion)AssetDatabase.LoadAssetAtPath(saveDir + $"/{toggleObjects[i].name}-Off.anim", typeof(Motion));
                 stateOff.writeDefaultValues = false;
 
                 //Adding created states to controller layer
-                currentLayer.stateMachine.AddState(stateOn, new Vector3(2, 3, 0));
-                currentLayer.stateMachine.AddState(stateOff, new Vector3(1, 1, 0));
+                currentLayer.stateMachine.AddState(stateOn, new Vector3(260, 120, 0));
+                currentLayer.stateMachine.AddState(stateOff, new Vector3(520, 120, 0));
+                //Adding created states to controller layer
 
-                //controller.layers
-                //currentLayer.stateMachine.states[0].state.AddTransition()
+
                 //Transition states
-                //AnimatorStateTransition OnOff = new AnimatorStateTransition();
                 AnimatorStateTransition OnOff = new AnimatorStateTransition();
                 OnOff.name = "OnOff";
                 OnOff.hasExitTime = false;
@@ -226,18 +221,8 @@ public class AutoToggleCreator : EditorWindow
                 OffOn.destinationState = currentLayer.stateMachine.states[0].state;
                 currentLayer.stateMachine.states[1].state.AddTransition(OffOn);
 
-                //If True, go to ON state.
-                //currentLayer.stateMachine.AddAnyStateTransition(OffOn.destinationState);
-                //currentLayer.stateMachine.anyStateTransitions[0].AddCondition(AnimatorConditionMode.IfNot, 0, toggleObjects[i].name + "Toggle");
-                //currentLayer.stateMachine.anyStateTransitions[0].duration = 0.01f;
-
-                //If False, go to Off (Empty) state.
-                //currentLayer.stateMachine.AddAnyStateTransition(OnOff.destinationState);
-                //currentLayer.stateMachine.anyStateTransitions[1].AddCondition(AnimatorConditionMode.If, 0, toggleObjects[i].name + "Toggle");
-                //currentLayer.stateMachine.anyStateTransitions[1].duration = 0.01f;
-
-                AssetDatabase.AddObjectToAsset(stateOn, AssetDatabase.GetAssetPath(controller));
-                AssetDatabase.AddObjectToAsset(stateOff, AssetDatabase.GetAssetPath(controller));
+                //AssetDatabase.AddObjectToAsset(stateOn, AssetDatabase.GetAssetPath(controller));
+                //AssetDatabase.AddObjectToAsset(stateOff, AssetDatabase.GetAssetPath(controller));
                 AssetDatabase.SaveAssets();
 
             }
@@ -330,6 +315,20 @@ public class AutoToggleCreator : EditorWindow
             {
                 vrcMenu.controls.Add(controlItem);
             }
+        }
+    }
+
+    private void setSaveDir()
+    {
+        string controllerDir;
+
+        controllerDir = AssetDatabase.GetAssetPath(controller);
+        controllerDir = controllerDir.Substring(0, controllerDir.Length - controller.name.Length - 11);
+        saveDir = controllerDir + "ToggleAnimations/";
+        //Check to see if path exists. If not, create it.
+        if (!Directory.Exists(saveDir))
+        {
+            Directory.CreateDirectory(saveDir);
         }
     }
 
