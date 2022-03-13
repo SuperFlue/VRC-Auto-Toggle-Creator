@@ -10,7 +10,6 @@ public class AutoToggleCreator : EditorWindow
 {
     public GameObject[] toggleObjects;
     public Animator myAnimator;
-    int ogparamlength;
     AnimatorController controller;
     VRCExpressionParameters vrcParam;
     VRCExpressionsMenu vrcMenu;
@@ -71,7 +70,7 @@ public class AutoToggleCreator : EditorWindow
 
         EditorGUILayout.BeginHorizontal();
         //Toggle to save VRCParameter values
-        parameterSave = (bool)EditorGUILayout.ToggleLeft("Save VRC Parameters?", parameterSave, EditorStyles.boldLabel);
+        parameterSave = (bool)EditorGUILayout.ToggleLeft("Set VRC Parameters to save state?", parameterSave, EditorStyles.boldLabel);
 
         EditorGUILayout.EndHorizontal();
 
@@ -218,55 +217,51 @@ public class AutoToggleCreator : EditorWindow
 
     private void MakeVRCParameter()
     {
-        VRCExpressionParameters.Parameter[] newList = new VRCExpressionParameters.Parameter[vrcParam.parameters.Length + toggleObjects.Length];
-
+        int ogparamlength;
+        int newitemlength;
         ogparamlength = vrcParam.parameters.Length;
+        newitemlength = toggleObjects.Length;
+
+        VRCExpressionParameters.Parameter[] newListFull = new VRCExpressionParameters.Parameter[ogparamlength + newitemlength];
+        
 
         //Add parameters that were already on the SO
         for (int i = 0; i < vrcParam.parameters.Length; i++)
         {
-            newList[i] = vrcParam.parameters[i];
+            newListFull[i] = vrcParam.parameters[i];
         }
+
+        int counter = ogparamlength;
+        int nullcounter = 0;
         bool same = false;
-        for (int i = 0; i < toggleObjects.Length; i++)
+        foreach (GameObject gameObject in toggleObjects)
         {
             //Make new parameter to add to list
             VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter();
 
-            int vrcParapLength = vrcParam.parameters.Length;
-
             //Modify parameter according to user settings and object name
-            newParam.name = toggleObjects[i].name + "Toggle";
+            newParam.name = gameObject.name + "Toggle";
             newParam.valueType = VRCExpressionParameters.ValueType.Bool;
             newParam.defaultValue = 0;
 
             //Check to see if parameter is saved
             if (parameterSave == true) { newParam.saved = true; } else { newParam.saved = false; }
-
-            same = false;
-
-            //THis garbage here checks to see if there is already a parameter with the same name. If so, It ignore it and removes one slip from the predetermined list.
-            for (int j = 0; j < vrcParapLength; j++)
+            same = doesNameExistVRCParam(newParam.name, newListFull);
+            if (same == false)
             {
-                if (newList[j].name == toggleObjects[i].name + "Toggle")
-                {
-                    same = true;
-                    newList = new VRCExpressionParameters.Parameter[vrcParam.parameters.Length + toggleObjects.Length - 1 -i];
-
-                    for (int k = 0; k < vrcParam.parameters.Length; k++)
-                    {
-                        newList[k] = vrcParam.parameters[k];
-                    }
-                }
+                newListFull[counter] = newParam;
+                counter++;
             }
-
-            //If no name name was found, then add parameter to list
-            if (same == false) {
-                newList[i + vrcParam.parameters.Length] = newParam;
-            }
+            else { nullcounter++; }
         }
-        //Apply new list to VRCExpressionParameter asset
-        vrcParam.parameters = newList;
+        int finallenght = newListFull.Length - nullcounter;
+        VRCExpressionParameters.Parameter[] finalNewList = new VRCExpressionParameters.Parameter[finallenght]; 
+        for (int i = 0; i < finallenght; i++)
+        {
+            finalNewList[i] = newListFull[i];
+        }
+
+        vrcParam.parameters = finalNewList;
     }
 
     private void MakeVRCMenu()
@@ -324,10 +319,27 @@ public class AutoToggleCreator : EditorWindow
     {
         for (int i = 0; i < array.Length; i++)
         {
+            
             if (array[i].name == name)
             {
                 return true;
             }
+    
+        }
+        return false;
+    
+    }
+    private bool doesNameExistVRCParam(string name, VRCExpressionParameters.Parameter[] array)
+    {
+        for (int i = 0; i < array.Length; i++)
+        {
+        if (!(array[i] == null))
+        {
+            if (array[i].name == name)
+            {
+                return true;
+            }
+        }
         }
         return false;
     }
