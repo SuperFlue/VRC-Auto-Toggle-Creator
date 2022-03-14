@@ -112,6 +112,7 @@ public class AutoToggleCreator : EditorWindow
             ApplyToAnimator(); //Handles making toggle bool property, layer setup, states and transitions.
             MakeVRCParameter(); //Makes a new VRCParameter list, populates it with existing parameters, then adds new ones for each toggle.
             MakeVRCMenu(); //Adds toggles to menu
+            AssetDatabase.SaveAssets();
         }
 
         GUILayout.Space(10f);
@@ -177,7 +178,8 @@ public class AutoToggleCreator : EditorWindow
     {
         bool initParamExist = doesNameExistParam("TrackingType", refObjects.refAnimController.parameters);
         string currentlayername;
-        
+        string assetContainerPath = AssetDatabase.GetAssetPath(refObjects.refAnimController);
+
 
         //Check if a parameter already exists with that name. If so, Ignore adding parameter.
         if (initParamExist == false)
@@ -197,29 +199,38 @@ public class AutoToggleCreator : EditorWindow
             AnimatorControllerLayer currentLayer = FindAnimationLayer(currentlayername);
             if (currentLayer == null)
             {
-                refObjects.refAnimController.AddLayer(currentlayername);
+                //refObjects.refAnimController.AddLayer(currentlayername);
+                AddLayerWithWeight(currentlayername, 1f);
                 currentLayer = FindAnimationLayer(currentlayername);
+
                 //Create a state that can wait for init (prevents toggles being on/off when someone loads their avatar)
                 AnimatorState Idle = new AnimatorState();
-                Idle.name = "Idle-WaitForInit";
+                Idle.name = currentLayer.stateMachine.MakeUniqueStateName("Idle-WaitForInit");
                 Idle.writeDefaultValues = false;
+                Idle.hideFlags = HideFlags.HideInHierarchy;
+                AssetDatabase.AddObjectToAsset(Idle, assetContainerPath);
+
 
                 //Creating On and Off(Empty) states
                 AnimatorState stateOn = new AnimatorState();
-                stateOn.name = $"{gameObject.name} On";
+                stateOn.name = currentLayer.stateMachine.MakeUniqueStateName($"{gameObject.name} On");
                 stateOn.motion = (Motion)AssetDatabase.LoadAssetAtPath(refObjects.saveDir + $"/{gameObject.name}-On.anim", typeof(Motion));
                 stateOn.writeDefaultValues = false;
+                stateOn.hideFlags = HideFlags.HideInHierarchy;
+                AssetDatabase.AddObjectToAsset(stateOn, assetContainerPath);
 
                 AnimatorState stateOff = new AnimatorState();
-                stateOff.name = $"{gameObject.name} Off";
+                stateOff.name = currentLayer.stateMachine.MakeUniqueStateName($"{gameObject.name} Off");
                 stateOff.motion = (Motion)AssetDatabase.LoadAssetAtPath(refObjects.saveDir + $"/{gameObject.name}-Off.anim", typeof(Motion));
                 stateOff.writeDefaultValues = false;
+                stateOff.hideFlags = HideFlags.HideInHierarchy;
+                AssetDatabase.AddObjectToAsset(stateOff, assetContainerPath);
 
                 //Adding created states to controller layer
                 currentLayer.stateMachine.AddState(Idle, new Vector3(260, 240, 0));
                 currentLayer.stateMachine.AddState(stateOn, new Vector3(260, 120, 0));
                 currentLayer.stateMachine.AddState(stateOff, new Vector3(520, 120, 0));
-
+                
                 //Transition states
                 // Add init wait transition
                 AnimatorStateTransition InitWaitOn = new AnimatorStateTransition();
@@ -228,42 +239,43 @@ public class AutoToggleCreator : EditorWindow
                 InitWaitOn.AddCondition(AnimatorConditionMode.NotEqual, 0, "TrackingType");
                 InitWaitOn.AddCondition(AnimatorConditionMode.If, 0, gameObject.name + "Toggle");
                 InitWaitOn.destinationState = currentLayer.stateMachine.states[1].state;
+                InitWaitOn.hideFlags = HideFlags.HideInHierarchy;
                 currentLayer.stateMachine.states[0].state.AddTransition(InitWaitOn);
-                
+                AssetDatabase.AddObjectToAsset(InitWaitOn, assetContainerPath);
+
                 AnimatorStateTransition InitWaitOff = new AnimatorStateTransition();
                 InitWaitOff.name = "InitWait-OffState";
                 InitWaitOff.hasExitTime = false;
                 InitWaitOff.AddCondition(AnimatorConditionMode.NotEqual, 0, "TrackingType");
                 InitWaitOff.AddCondition(AnimatorConditionMode.IfNot, 0, gameObject.name + "Toggle");
                 InitWaitOff.destinationState = currentLayer.stateMachine.states[2].state;
+                InitWaitOff.hideFlags = HideFlags.HideInHierarchy;
                 currentLayer.stateMachine.states[0].state.AddTransition(InitWaitOff);
+                AssetDatabase.AddObjectToAsset(InitWaitOff, assetContainerPath);
 
                 AnimatorStateTransition OnOff = new AnimatorStateTransition();
                 OnOff.name = "On->Off";
                 OnOff.hasExitTime = false;
                 OnOff.AddCondition(AnimatorConditionMode.IfNot, 0, gameObject.name + "Toggle");
                 OnOff.destinationState = currentLayer.stateMachine.states[2].state;
+                OnOff.hideFlags = HideFlags.HideInHierarchy;
                 currentLayer.stateMachine.states[1].state.AddTransition(OnOff);
+                AssetDatabase.AddObjectToAsset(OnOff, assetContainerPath);
 
                 AnimatorStateTransition OffOn = new AnimatorStateTransition();
                 OffOn.name = "Off->On";
                 OffOn.hasExitTime = false;
                 OffOn.AddCondition(AnimatorConditionMode.If, 0, gameObject.name + "Toggle");
                 OffOn.destinationState = currentLayer.stateMachine.states[1].state;
+                OffOn.hideFlags = HideFlags.HideInHierarchy;
                 currentLayer.stateMachine.states[2].state.AddTransition(OffOn);
-
-                int currentLayerIndex = FindAnimationLayerIndex(currentlayername);
-                AnimatorControllerLayer[] layers = refObjects.refAnimController.layers;
-                layers[currentLayerIndex].defaultWeight = 1;
-                refObjects.refAnimController.layers = layers;
-
-                AssetDatabase.SaveAssets();
-
+                AssetDatabase.AddObjectToAsset(OffOn, assetContainerPath);
             }
         }
 
         EditorUtility.SetDirty(refObjects.refAnimController);
         AssetDatabase.SaveAssets();
+
     }
 
     private void MakeVRCParameter()
@@ -314,7 +326,6 @@ public class AutoToggleCreator : EditorWindow
         {
             refObjects.vrcParam.parameters = finalNewList;
             EditorUtility.SetDirty(refObjects.vrcParam);
-            AssetDatabase.SaveAssets();
         }
         else
         {
@@ -349,7 +360,6 @@ public class AutoToggleCreator : EditorWindow
         }
 
         EditorUtility.SetDirty(refObjects.vrcMenu);
-        AssetDatabase.SaveAssets();
     }
 
     private bool vrcParamSanityCheck(VRCExpressionParameters.Parameter[] parameters)
@@ -443,6 +453,25 @@ public class AutoToggleCreator : EditorWindow
             }
         }
         return 0;
+    }
+ 
+    private void AddLayerWithWeight(string layerName, float weightWhenCreating/*, AvatarMask maskWhenCreating*/)
+    {
+        // Credit Hai (from Hai CGE)
+        var newLayer = new AnimatorControllerLayer();
+        newLayer.name = refObjects.refAnimController.MakeUniqueLayerName(layerName);
+        newLayer.stateMachine = new AnimatorStateMachine();
+        newLayer.stateMachine.name = newLayer.name;
+        newLayer.stateMachine.hideFlags = HideFlags.HideInHierarchy;
+        newLayer.defaultWeight = weightWhenCreating;
+        //newLayer.avatarMask = maskWhenCreating;
+        if (AssetDatabase.GetAssetPath(refObjects.refAnimController) != "")
+        {
+            AssetDatabase.AddObjectToAsset(newLayer.stateMachine,
+                AssetDatabase.GetAssetPath(refObjects.refAnimController));
+        }
+
+        refObjects.refAnimController.AddLayer(newLayer);
     }
 }
 
