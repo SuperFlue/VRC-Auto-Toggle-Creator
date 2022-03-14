@@ -227,24 +227,33 @@ public class AutoToggleCreator : EditorWindow
 
                 //Transition states
                 // Add init wait transition
-                AnimatorStateTransition InitWait = new AnimatorStateTransition();
-                InitWait.name = "InitWait";
-                InitWait.hasExitTime = false;
-                InitWait.AddCondition(AnimatorConditionMode.NotEqual, 0, "TrackingType");
-                InitWait.destinationState = currentLayer.stateMachine.states[1].state;
-                currentLayer.stateMachine.states[0].state.AddTransition(InitWait);
+                AnimatorStateTransition InitWaitOn = new AnimatorStateTransition();
+                InitWaitOn.name = "InitWait-OnState";
+                InitWaitOn.hasExitTime = false;
+                InitWaitOn.AddCondition(AnimatorConditionMode.NotEqual, 0, "TrackingType");
+                InitWaitOn.AddCondition(AnimatorConditionMode.If, 0, gameObject.name + "Toggle");
+                InitWaitOn.destinationState = currentLayer.stateMachine.states[1].state;
+                currentLayer.stateMachine.states[0].state.AddTransition(InitWaitOn);
+                
+                AnimatorStateTransition InitWaitOff = new AnimatorStateTransition();
+                InitWaitOff.name = "InitWait-OffState";
+                InitWaitOff.hasExitTime = false;
+                InitWaitOff.AddCondition(AnimatorConditionMode.NotEqual, 0, "TrackingType");
+                InitWaitOff.AddCondition(AnimatorConditionMode.IfNot, 0, gameObject.name + "Toggle");
+                InitWaitOff.destinationState = currentLayer.stateMachine.states[2].state;
+                currentLayer.stateMachine.states[0].state.AddTransition(InitWaitOff);
 
                 AnimatorStateTransition OnOff = new AnimatorStateTransition();
-                OnOff.name = "OnOff";
+                OnOff.name = "On->Off";
                 OnOff.hasExitTime = false;
-                OnOff.AddCondition(AnimatorConditionMode.If, 0, gameObject.name + "Toggle");
+                OnOff.AddCondition(AnimatorConditionMode.IfNot, 0, gameObject.name + "Toggle");
                 OnOff.destinationState = currentLayer.stateMachine.states[2].state;
                 currentLayer.stateMachine.states[1].state.AddTransition(OnOff);
 
                 AnimatorStateTransition OffOn = new AnimatorStateTransition();
-                OffOn.name = "OffOn";
+                OffOn.name = "Off->On";
                 OffOn.hasExitTime = false;
-                OffOn.AddCondition(AnimatorConditionMode.IfNot, 0, gameObject.name + "Toggle");
+                OffOn.AddCondition(AnimatorConditionMode.If, 0, gameObject.name + "Toggle");
                 OffOn.destinationState = currentLayer.stateMachine.states[1].state;
                 currentLayer.stateMachine.states[2].state.AddTransition(OffOn);
 
