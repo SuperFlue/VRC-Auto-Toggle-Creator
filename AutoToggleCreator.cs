@@ -12,10 +12,10 @@ public class AutoToggleCreator : EditorWindow
 {
     public List<GameObject> toggleObjects;
     static bool parameterSave;
-    bool pressCreate = false;
-    bool showPosition = false;
     static string saveSubfolder = "ToggleAnimations";
     public static ReferenceObjects refObjects = new ReferenceObjects();
+    bool showPosition = false;
+    bool missingAvatarDesc = false;
 
     public class ReferenceObjects
     {
@@ -27,47 +27,61 @@ public class AutoToggleCreator : EditorWindow
 
         public ReferenceObjects()
         {
-            this.refGameObject = null;
-            this.refAnimController = null;
-            this.vrcParam = null;
-            this.vrcMenu = null;
-            this.saveDir = null;
+            refGameObject = null;
+            refAnimController = null;
+            vrcParam = null;
+            vrcMenu = null;
+            saveDir = null;
         }
         public void generateSavePath()
         {
             string controllerpath;
-            if (this.refAnimController != null)
+            if (refAnimController != null)
             {
-                controllerpath = AssetDatabase.GetAssetPath(this.refAnimController);
-                controllerpath = controllerpath.Substring(0, controllerpath.Length - this.refAnimController.name.Length - 11);
-                this.saveDir = controllerpath + saveSubfolder + "/";
+                controllerpath = AssetDatabase.GetAssetPath(refAnimController);
+                controllerpath = controllerpath.Substring(0, controllerpath.Length - refAnimController.name.Length - 11);
+                saveDir = controllerpath + saveSubfolder + "/";
             }
         }
     }
-
 
     [MenuItem("Tools/Cascadian/AutoToggleCreator")]
 
     static void Init()
     {
         // Get existing open window or if none, make a new one:
-        AutoToggleCreator window = (AutoToggleCreator)EditorWindow.GetWindow(typeof(AutoToggleCreator));
+        AutoToggleCreator window = (AutoToggleCreator)GetWindow(typeof(AutoToggleCreator));
         window.Show();
 
     }
 
     public void OnGUI()
     {
+        GUIStyle redLabel = new GUIStyle(EditorStyles.label);
+        redLabel.normal.textColor = Color.red;
         EditorGUILayout.Space(15);
         if (GUILayout.Button("Auto-Fill with Selected Avatar", GUILayout.Height(30f)))
         {
-            //if (Selection.activeTransform.GetComponent<Animator>() == null) { return; }
+            if (Selection.activeTransform.GetComponent<VRCAvatarDescriptor>() == null) 
+            {
+                missingAvatarDesc = true;
+                return;
+            }
+            missingAvatarDesc = false;
             GameObject SelectedObj = Selection.activeGameObject;
             refObjects.refGameObject = SelectedObj;
             refObjects.refAnimController = (AnimatorController)SelectedObj.GetComponent<VRCAvatarDescriptor>().baseAnimationLayers[4].animatorController;
             refObjects.vrcParam = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionParameters;
             refObjects.vrcMenu = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionsMenu;
+            
         }
+        if (missingAvatarDesc)
+        {
+            EditorGUILayout.BeginVertical();
+            GUILayout.Label("GameObject requires a VRCAvatarDescriptor for auto-fill.", redLabel);
+            EditorGUILayout.EndVertical();
+        }
+
         EditorGUILayout.Space(10);
 
         EditorGUILayout.BeginVertical();
@@ -156,8 +170,8 @@ public class AutoToggleCreator : EditorWindow
         foreach (GameObject gameObject in toggleObjects)
         {
             //Make animation clips for on and off state and set curves for game objects on and off
-            AnimationClip toggleClipOn = new AnimationClip(); //Clip for ON
-
+            //Clip for ON
+            AnimationClip toggleClipOn = new AnimationClip(); 
             toggleClipOn.SetCurve
                 (GetGameObjectPath(gameObject.transform).Substring(refObjects.refGameObject.gameObject.name.Length + 1),
                 typeof(GameObject),
@@ -166,8 +180,8 @@ public class AutoToggleCreator : EditorWindow
                 new Keyframe(0.016666668f, 1, 0, 0))
                 );
 
-            AnimationClip toggleClipOff = new AnimationClip(); //Clip for OFF
-
+            //Clip for OFF
+            AnimationClip toggleClipOff = new AnimationClip(); 
             toggleClipOff.SetCurve
                 (GetGameObjectPath(gameObject.transform).Substring(refObjects.refGameObject.gameObject.name.Length + 1),
                 typeof(GameObject),
@@ -176,7 +190,7 @@ public class AutoToggleCreator : EditorWindow
                 new Keyframe(0.016666668f, 0, 0, 0))
                 );
 
-            //Save on animation clips (Off should not be needed?)
+            //Save on animation clips
             AssetDatabase.CreateAsset(toggleClipOn, refObjects.saveDir + $"{gameObject.name}-On.anim");
             AssetDatabase.CreateAsset(toggleClipOff, refObjects.saveDir + $"{gameObject.name}-Off.anim");
             AssetDatabase.SaveAssets();
