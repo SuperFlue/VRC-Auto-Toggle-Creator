@@ -315,6 +315,7 @@ public class AutoToggleCreator : EditorWindow
 
     private void MakeVRCMenu()
     {
+        int maxmenuitems = 8;
         foreach (GameObject gameObject in toggleObjects)
         {
             VRCExpressionsMenu.Control controlItem = new VRCExpressionsMenu.Control
@@ -326,7 +327,14 @@ public class AutoToggleCreator : EditorWindow
 
             if (!doesNameExistVRCMenu(controlItem.name, refObjects.vrcMenu.controls))
             {
-                refObjects.vrcMenu.controls.Add(controlItem);
+                if(refObjects.vrcMenu.controls.Count < maxmenuitems)
+                {
+                     refObjects.vrcMenu.controls.Add(controlItem);
+                }
+                else
+                {
+                    Debug.LogWarning("Unable to add: " + controlItem.name + ". To menu: " + refObjects.vrcMenu.name + ". Too many entires! Max " + maxmenuitems + " allowed!");
+                }
             }
         }
 
@@ -345,7 +353,6 @@ public class AutoToggleCreator : EditorWindow
         }
         return false;
     }
-
     private void checkSaveDir()
     {
         if (!Directory.Exists(refObjects.saveDir))
