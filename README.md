@@ -3,7 +3,7 @@ A Unity Editor tool to automatically setup the lengthy process of making animati
 While this is made with VRChat in mind, that is only the tail end of the script and can be used for a variety of tasks related to generating animations and configuring animators.
 # Download
 
-https://github.com/CascadianWorks/VRC-Auto-Toggle-Creator/releases
+https://github.com/SuperFlue/VRC-Auto-Toggle-Creator/releases
 
 # How to Use
 1. Download ***AutoToggleCreator.cs*** from the download page linked above.
