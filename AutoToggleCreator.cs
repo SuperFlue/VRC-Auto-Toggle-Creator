@@ -176,6 +176,8 @@ public class AutoToggleCreator : EditorWindow
     private void ApplyToAnimator()
     {
         bool initParamExist = doesNameExistParam("TrackingType", refObjects.refAnimController.parameters);
+        string currentlayername;
+        
 
         //Check if a parameter already exists with that name. If so, Ignore adding parameter.
         if (initParamExist == false)
@@ -190,20 +192,13 @@ public class AutoToggleCreator : EditorWindow
             {
                 refObjects.refAnimController.AddParameter(gameObject.name + "Toggle", AnimatorControllerParameterType.Bool);
             }
-
+            currentlayername = gameObject.name.Replace(".", "_");
             //Check if a layer already exists with that name. If so, Ignore adding layer.
-            AnimatorControllerLayer currentLayer = FindAnimationLayer(gameObject.name);
+            AnimatorControllerLayer currentLayer = FindAnimationLayer(currentlayername);
             if (currentLayer == null)
             {
-                AnimatorControllerLayer layer = new AnimatorControllerLayer
-                {
-                    name = gameObject.name.Replace(".", "_"),
-                    defaultWeight = 1f,
-                    stateMachine = new AnimatorStateMachine() // Make sure to create a StateMachine as well, as a default one is not created
-                };
-                refObjects.refAnimController.AddLayer(layer);
-                currentLayer = FindAnimationLayer(gameObject.name);
-
+                refObjects.refAnimController.AddLayer(currentlayername);
+                currentLayer = FindAnimationLayer(currentlayername);
                 //Create a state that can wait for init (prevents toggles being on/off when someone loads their avatar)
                 AnimatorState Idle = new AnimatorState();
                 Idle.name = "Idle-WaitForInit";
@@ -256,6 +251,11 @@ public class AutoToggleCreator : EditorWindow
                 OffOn.AddCondition(AnimatorConditionMode.If, 0, gameObject.name + "Toggle");
                 OffOn.destinationState = currentLayer.stateMachine.states[1].state;
                 currentLayer.stateMachine.states[2].state.AddTransition(OffOn);
+
+                int currentLayerIndex = FindAnimationLayerIndex(currentlayername);
+                AnimatorControllerLayer[] layers = refObjects.refAnimController.layers;
+                layers[currentLayerIndex].defaultWeight = 1;
+                refObjects.refAnimController.layers = layers;
 
                 AssetDatabase.SaveAssets();
 
@@ -432,6 +432,17 @@ public class AutoToggleCreator : EditorWindow
             }
         }
         return null;
+    }
+    private int FindAnimationLayerIndex(string name)
+    {
+        for (int i = 0; i < refObjects.refAnimController.layers.Length; i++)
+        {
+            if (refObjects.refAnimController.layers[i].name == name)
+            {
+                return i;
+            }
+        }
+        return 0;
     }
 }
 
