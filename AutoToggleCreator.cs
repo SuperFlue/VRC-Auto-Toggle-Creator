@@ -122,18 +122,36 @@ public class AutoToggleCreator : EditorWindow
         EditorGUILayout.PropertyField(toggleObjectsProperty, true);
         GUILayout.Space(10f);
         GUILayout.Label("Toggles will be written to:\n" + refObjects.saveDir + "\nThis can be changed under Advanced settings.", EditorStyles.helpBox);
-        GUILayout.Label("Needs all items filled to proceed.", EditorStyles.helpBox);
 
-        using (new EditorGUI.DisabledScope((refObjects.refGameObject && refObjects.refAnimController && refObjects.vrcParam && refObjects.vrcMenu) != true))
+        if(refObjects.refAnimController != true)
+        {
+            GUILayout.Label("Minimum reqires a animation controller to proceed", redLabel);
+        }
+
+        //using (new EditorGUI.DisabledScope((refObjects.refGameObject && refObjects.refAnimController && refObjects.vrcParam && refObjects.vrcMenu) != true))
+        using (new EditorGUI.DisabledScope(refObjects.refAnimController != true))
+
         {
             //pressCreate = GUILayout.Button("Create Toggles!", GUILayout.Height(40f));
             if (GUILayout.Button("Create Toggles!", GUILayout.Height(40f)))
             {
                 checkSaveDir(); //Sets the save directory
-                CreateClips(); //Creates the Animation Clips needed for toggles.
-                ApplyToAnimator(); //Handles making toggle bool property, layer setup, states and transitions.
-                MakeVRCParameter(); //Makes a new VRCParameter list, populates it with existing parameters, then adds new ones for each toggle.
-                MakeVRCMenu(); //Adds toggles to menu
+                if (refObjects.refGameObject != null)
+                {
+                    CreateClips(); //Creates the Animation Clips needed for toggles.
+                }
+                if (refObjects.refAnimController != null)
+                {
+                    ApplyToAnimator(); //Handles making toggle bool property, layer setup, states and transitions.
+                }
+                if (refObjects.vrcParam != null)
+                {
+                    MakeVRCParameter(); //Makes a new VRCParameter list, populates it with existing parameters, then adds new ones for each toggle.
+                }
+                if (refObjects.vrcMenu != null)
+                {
+                    MakeVRCMenu(); //Adds toggles to menu
+                }
                 AssetDatabase.SaveAssets();
             }
         }
