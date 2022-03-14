@@ -324,6 +324,7 @@ public class AutoToggleCreator : EditorWindow
                 type = VRCExpressionsMenu.Control.ControlType.Toggle,
                 parameter = new VRCExpressionsMenu.Control.Parameter()
             };
+            controlItem.parameter.name = gameObject.name + "Toggle";
 
             if (!doesNameExistVRCMenu(controlItem.name, refObjects.vrcMenu.controls))
             {
