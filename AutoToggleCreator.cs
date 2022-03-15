@@ -1,10 +1,8 @@
-﻿using System.IO;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
-using System.Collections.Generic;
-using System;
 #if UNITY_EDITOR
-using static VRC.SDKBase.VRC_AvatarParameterDriver;
+using System.IO;
+using System.Collections.Generic;
 using VRC.SDK3.Avatars.Components;
 using VRC.SDK3.Avatars.ScriptableObjects;
 using UnityEditor.Animations;
@@ -62,7 +60,7 @@ public class AutoToggleCreator : EditorWindow
         EditorGUILayout.Space(15);
         if (GUILayout.Button("Auto-Fill with Selected Avatar", GUILayout.Height(30f)))
         {
-            if (Selection.activeTransform.GetComponent<VRCAvatarDescriptor>() == null) 
+            if (Selection.activeTransform.GetComponent<VRCAvatarDescriptor>() == null)
             {
                 missingAvatarDesc = true;
                 return;
@@ -73,7 +71,7 @@ public class AutoToggleCreator : EditorWindow
             refObjects.refAnimController = (AnimatorController)SelectedObj.GetComponent<VRCAvatarDescriptor>().baseAnimationLayers[4].animatorController;
             refObjects.vrcParam = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionParameters;
             refObjects.vrcMenu = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionsMenu;
-            
+
         }
         if (missingAvatarDesc)
         {
@@ -123,7 +121,7 @@ public class AutoToggleCreator : EditorWindow
         GUILayout.Space(10f);
         GUILayout.Label("Toggles will be written to:\n" + refObjects.saveDir + "\nThis can be changed under Advanced settings.", EditorStyles.helpBox);
 
-        if(refObjects.refAnimController != true)
+        if (refObjects.refAnimController != true)
         {
             GUILayout.Label("Minimum reqires a animation controller to proceed", redLabel);
         }
@@ -189,7 +187,7 @@ public class AutoToggleCreator : EditorWindow
         {
             //Make animation clips for on and off state and set curves for game objects on and off
             //Clip for ON
-            AnimationClip toggleClipOn = new AnimationClip(); 
+            AnimationClip toggleClipOn = new AnimationClip();
             toggleClipOn.SetCurve
                 (GetGameObjectPath(gameObject.transform).Substring(refObjects.refGameObject.gameObject.name.Length + 1),
                 typeof(GameObject),
@@ -199,7 +197,7 @@ public class AutoToggleCreator : EditorWindow
                 );
 
             //Clip for OFF
-            AnimationClip toggleClipOff = new AnimationClip(); 
+            AnimationClip toggleClipOff = new AnimationClip();
             toggleClipOff.SetCurve
                 (GetGameObjectPath(gameObject.transform).Substring(refObjects.refGameObject.gameObject.name.Length + 1),
                 typeof(GameObject),

@@ -35,3 +35,6 @@ Every animation toggle also gets created with a initialization state, to prevent
 Note! By default this creates layers with Write Defaults off according VRC best practice.
 Depending on you avatar you might have to tweak this.
 
+# Credits
+- [CascadianWorks](https://github.com/CascadianWorks) - Original code,
+- [Hai](https://github.com/hai-vr) - Some methods borrowed from CGE.
