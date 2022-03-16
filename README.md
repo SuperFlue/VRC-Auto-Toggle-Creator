@@ -20,6 +20,13 @@ If you don't care much about the auto generated menus it will stop filling menus
 # Advanced Settings
 - ***Output subdirectory:*** This is the subdirectory any animation clips will be placed in. You can change this if needed. This is always relative to the animation controller.
 - ***Save VRC Parameters:*** If this button is checked, parameters will be set as "saved". This means the parameter state will persist even if you change world.
+- ***Make object toggles exclusive:*** This will consider the list of objects as a "set" where only one of these can be active at a time. This is set up using VRCParameterDrivers
+- ***Create fallback:*** This will consider the first object as the "fallback" state. This means if all of the toggles are off the first object gets turned on.  
+This is useful for example if you have different clothes on your avatar, but no body mesh underneath (so toggling all off could leave only a floating head).
+## "Dangerous settings"
+These settings are considered dangerous because they will overwrite/delete stuff.
+- ***Recreate Layers:*** This will delete any layer existing with the object name and recreate it with the scripted setup.  
+This will delete any customization already done on the layer so be careful!
 # Current known Issues
 - Random edge cases where error can occur due to names, order or invalid objects.
 - Error sometimes when selecting multiple game objects in scene. Does not effect anything but NO CLUE why :/
