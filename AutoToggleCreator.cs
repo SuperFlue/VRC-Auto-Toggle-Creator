@@ -316,24 +316,24 @@ public class AutoToggleCreator : EditorWindow
                 AnimatorCondition[] InitWaitOn = new AnimatorCondition[2];
                 InitWaitOn[0] = MakeIfTrueCondition(currentParamName);
                 InitWaitOn[1] = TrackingNot0;
-                MakeTransition(currentLayer.stateMachine.states[0].state, currentLayer.stateMachine.states[1].state, "InitWait-OnState", InitWaitOn, ReferenceObjects.assetContainerPath);
+                MakeTransition(currentLayer.stateMachine.states[0].state, currentLayer.stateMachine.states[1].state, "InitWait-OnState", InitWaitOn);
 
                 // Add transition Init -> Off
                 AnimatorCondition[] InitWaitOff = new AnimatorCondition[2];
                 InitWaitOff[0] = MakeIfFalseCondition(currentParamName);
                 InitWaitOff[1] = TrackingNot0;
-                MakeTransition(currentLayer.stateMachine.states[0].state, currentLayer.stateMachine.states[2].state, "InitWait-OffState", InitWaitOff, ReferenceObjects.assetContainerPath);
+                MakeTransition(currentLayer.stateMachine.states[0].state, currentLayer.stateMachine.states[2].state, "InitWait-OffState", InitWaitOff);
 
                 //On <-> Off transitions
                 //Off -> On Transition
                 AnimatorCondition[] OffOnCondition = new AnimatorCondition[1];
                 OffOnCondition[0] = MakeIfTrueCondition(currentParamName);
-                MakeTransition(currentLayer.stateMachine.states[2].state, currentLayer.stateMachine.states[1].state, "Off->On", OffOnCondition, ReferenceObjects.assetContainerPath);
+                MakeTransition(currentLayer.stateMachine.states[2].state, currentLayer.stateMachine.states[1].state, "Off->On", OffOnCondition);
 
                 //Off -> On Transition
                 AnimatorCondition[] OnOffCondition = new AnimatorCondition[1];
                 OnOffCondition[0] = MakeIfFalseCondition(currentParamName);
-                MakeTransition(currentLayer.stateMachine.states[1].state, currentLayer.stateMachine.states[2].state, "On->Off", OnOffCondition, ReferenceObjects.assetContainerPath);
+                MakeTransition(currentLayer.stateMachine.states[1].state, currentLayer.stateMachine.states[2].state, "On->Off", OnOffCondition);
 
             }
         }
@@ -369,6 +369,9 @@ public class AutoToggleCreator : EditorWindow
             machineBehaviours[0] = MakeVRCParameterSetDriver(toggleList);
             currentLayer.stateMachine.states[1].state.behaviours = machineBehaviours;
         }
+
+        EditorUtility.SetDirty(ReferenceObjects.refAnimController);
+        AssetDatabase.SaveAssets();
     }
     private void FallBackCreator()
     {
@@ -395,12 +398,12 @@ public class AutoToggleCreator : EditorWindow
         {
             offToFallbackState[i] = MakeIfFalseCondition(paramNamesList[i].togglname);
         }
-        MakeTransition(layerWithFallback.stateMachine.states[2].state, layerWithFallback.stateMachine.states[3].state, "Off -> Fallback", offToFallbackState, ReferenceObjects.assetContainerPath);
+        MakeTransition(layerWithFallback.stateMachine.states[2].state, layerWithFallback.stateMachine.states[3].state, "Off -> Fallback", offToFallbackState);
 
         // Fallback to On
         AnimatorCondition[] OnOffCondition = new AnimatorCondition[1];
         OnOffCondition[0] = MakeIfTrueCondition(paramNamesList[0].togglname);
-        MakeTransition(layerWithFallback.stateMachine.states[3].state, layerWithFallback.stateMachine.states[1].state, "Fallback -> On", OnOffCondition, ReferenceObjects.assetContainerPath);
+        MakeTransition(layerWithFallback.stateMachine.states[3].state, layerWithFallback.stateMachine.states[1].state, "Fallback -> On", OnOffCondition);
 
         (string toggleName, float toggleValue)[] toggleList = new (string, float)[1];
         toggleList[0].toggleName = paramNamesList[0].togglname;
@@ -408,6 +411,8 @@ public class AutoToggleCreator : EditorWindow
         StateMachineBehaviour[] machineBehaviours = new StateMachineBehaviour[1];
         machineBehaviours[0] = MakeVRCParameterSetDriver(toggleList);
         layerWithFallback.stateMachine.states[3].state.behaviours = machineBehaviours;
+        EditorUtility.SetDirty(ReferenceObjects.refAnimController);
+        AssetDatabase.SaveAssets();
     }
 
     private static VRCAvatarParameterDriver MakeVRCParameterSetDriver((string toggleName, float toggleValue)[] paramAndBool)
@@ -424,6 +429,8 @@ public class AutoToggleCreator : EditorWindow
             };
             parameterDriver.parameters.Add(driverParameter);
         }
+        parameterDriver.hideFlags = HideFlags.HideInHierarchy;
+        AssetDatabase.AddObjectToAsset(parameterDriver, ReferenceObjects.assetContainerPath);
         return parameterDriver;
     }
     private static AnimatorCondition MakeIfTrueCondition(string boolParameterName)
@@ -447,7 +454,7 @@ public class AutoToggleCreator : EditorWindow
         return animatorCondition;
     }
 
-    private static void MakeTransition(AnimatorState sourceState, AnimatorState destinationState, string transitionName, AnimatorCondition[] conditions, string assetContainerPath)
+    private static void MakeTransition(AnimatorState sourceState, AnimatorState destinationState, string transitionName, AnimatorCondition[] conditions)
     {
         AnimatorStateTransition newTransition = new AnimatorStateTransition
         {
@@ -458,7 +465,7 @@ public class AutoToggleCreator : EditorWindow
             conditions = conditions
         };
         sourceState.AddTransition(newTransition);
-        AssetDatabase.AddObjectToAsset(newTransition, assetContainerPath);
+        AssetDatabase.AddObjectToAsset(newTransition, ReferenceObjects.assetContainerPath);
     }
     private AnimatorControllerLayer FindAnimationLayer(string name)
     {
@@ -496,7 +503,7 @@ public class AutoToggleCreator : EditorWindow
             name = layerUniqueName,
             hideFlags = HideFlags.HideInHierarchy
         };
-        AssetDatabase.AddObjectToAsset(newLayer.stateMachine, AssetDatabase.GetAssetPath(ReferenceObjects.refAnimController));
+        AssetDatabase.AddObjectToAsset(newLayer.stateMachine, ReferenceObjects.assetContainerPath);
         ReferenceObjects.refAnimController.AddLayer(newLayer);
     }
 
@@ -572,7 +579,7 @@ public class AutoToggleCreator : EditorWindow
         {
             VRCExpressionsMenu.Control controlItem = new VRCExpressionsMenu.Control
             {
-                name = gameObject.name + "Toggle",
+                name = gameObject.name + " Toggle",
                 type = VRCExpressionsMenu.Control.ControlType.Toggle,
                 parameter = new VRCExpressionsMenu.Control.Parameter()
             };
@@ -593,7 +600,6 @@ public class AutoToggleCreator : EditorWindow
 
         EditorUtility.SetDirty(ReferenceObjects.vrcMenu);
     }
-
 
     private void checkSaveDir()
     {
