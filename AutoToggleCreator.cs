@@ -9,7 +9,7 @@ using UnityEditor.Animations;
 public class AutoToggleCreator : EditorWindow
 {
     private const int maxVRCMenuItems = 8;
-    public List<GameObject> toggleObjects;
+    public List<GameObject> toggleObjects = new List<GameObject>();
 
     private static class ReferenceObjects
     {
