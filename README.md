@@ -35,7 +35,9 @@ This will delete any customization already done on the layer so be careful!
 Video is out of date with current state.
 
 # How It Works
-What this editor tool does is generate an animation clip and keyframes inside of it for the corresponding toggle object name (also checks to see if the default should be activating or deactivating the object). Once the clips are generated and places in the assets, the animator controller is accessed and a new layer and parameter is made for each toggle object. The transitions are setup in the configuration VRChat needs to behave with their expressions system. Once that is taken care of all the smaller settings/values set, the VRCExpressionsParameters and VRCExpressionsMenu assets are accessed and filled using the same naming conventions as with the animator controller. A control is made and assigned with the parameter and it's done!
+What this editor tool does is generate an animation clip and keyframes inside of it for the corresponding toggle object name (also checks to see if the default should be activating or deactivating the object).  
+Once the clips are generated and places in the assets, the animator controller is accessed and a new layer and parameter is made for each toggle object. The transitions are setup in the configuration VRChat needs to behave with their expressions system.  
+Once that is taken care of all the smaller settings/values set, the VRCExpressionsParameters and VRCExpressionsMenu assets are accessed and filled using the same naming conventions as with the animator controller. A control is made and assigned with the parameter and it's done!
 
 Every animation toggle also gets created with a initialization state, to prevent toggles from going weird when you load in your avatar.
 
