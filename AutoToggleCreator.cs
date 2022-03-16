@@ -8,44 +8,42 @@ using VRC.SDK3.Avatars.ScriptableObjects;
 using UnityEditor.Animations;
 public class AutoToggleCreator : EditorWindow
 {
+    private const int maxVRCMenuItems = 8;
     public List<GameObject> toggleObjects;
-    static bool parameterSave;
-    static string saveSubfolder = "ToggleAnimations";
-    public static ReferenceObjects refObjects = new ReferenceObjects();
-    bool showPosition = false;
-    bool missingAvatarDesc = false;
-    static bool writeDefaults = false;
 
-    public class ReferenceObjects
+    private static class ReferenceObjects
     {
-        public GameObject refGameObject;
-        public AnimatorController refAnimController;
-        public VRCExpressionParameters vrcParam;
-        public VRCExpressionsMenu vrcMenu;
-        public string saveDir;
-        public string assetContainerPath;
+        public static GameObject refGameObject;
+        public static AnimatorController refAnimController;
+        public static VRCExpressionParameters vrcParam;
+        public static VRCExpressionsMenu vrcMenu;
+        public static string saveDir;
+        public static string assetContainerPath;
 
-        public ReferenceObjects()
-        {
-            refGameObject = null;
-            refAnimController = null;
-            vrcParam = null;
-            vrcMenu = null;
-            saveDir = null;
-        }
-        public void generateSavePath()
+        public static void generateSavePath()
         {
             string controllerpath;
             if (refAnimController != null)
             {
                 assetContainerPath = AssetDatabase.GetAssetPath(refAnimController);
                 controllerpath = assetContainerPath.Substring(0, assetContainerPath.Length - refAnimController.name.Length - 11);
-                saveDir = controllerpath + saveSubfolder + "/";
+                saveDir = controllerpath + Settings.saveSubfolder + "/";
             }
         }
     }
+    private static class Settings
+    {
+        public static bool showAdvanced = false;
+        public static bool showAdvancedDangerous = false;
+        public static bool parameterSave = false;
+        public static bool writeDefaults = false;
+        public static bool createExclusiveToggle = false;
+        public static bool createFallbackState = false;
+        public static bool recreateLayers = false;
+        public static string saveSubfolder = "ToggleAnimations";
+    }
 
-    [MenuItem("Tools/Cascadian/AutoToggleCreator")]
+    [MenuItem("Tools/AutoToggleCreator")]
 
     static void Init()
     {
@@ -55,6 +53,7 @@ public class AutoToggleCreator : EditorWindow
 
     }
 
+    bool missingAvatarDesc;
     public void OnGUI()
     {
         GUIStyle redLabel = new GUIStyle(EditorStyles.label);
@@ -69,10 +68,10 @@ public class AutoToggleCreator : EditorWindow
             }
             missingAvatarDesc = false;
             GameObject SelectedObj = Selection.activeGameObject;
-            refObjects.refGameObject = SelectedObj;
-            refObjects.refAnimController = (AnimatorController)SelectedObj.GetComponent<VRCAvatarDescriptor>().baseAnimationLayers[4].animatorController;
-            refObjects.vrcParam = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionParameters;
-            refObjects.vrcMenu = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionsMenu;
+            ReferenceObjects.refGameObject = SelectedObj;
+            ReferenceObjects.refAnimController = (AnimatorController)SelectedObj.GetComponent<VRCAvatarDescriptor>().baseAnimationLayers[4].animatorController;
+            ReferenceObjects.vrcParam = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionParameters;
+            ReferenceObjects.vrcMenu = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionsMenu;
 
         }
         if (missingAvatarDesc)
@@ -87,19 +86,19 @@ public class AutoToggleCreator : EditorWindow
         EditorGUILayout.BeginVertical();
         //Avatar Animator
         GUILayout.Label("ROOT GAMEOBJECT", EditorStyles.boldLabel);
-        refObjects.refGameObject = (GameObject)EditorGUILayout.ObjectField(refObjects.refGameObject, typeof(GameObject), true, GUILayout.Height(20f));
+        ReferenceObjects.refGameObject = (GameObject)EditorGUILayout.ObjectField(ReferenceObjects.refGameObject, typeof(GameObject), true, GUILayout.Height(20f));
 
         //FX Animator Controller
         GUILayout.Label("FX AVATAR CONTROLLER", EditorStyles.boldLabel);
-        refObjects.refAnimController = (AnimatorController)EditorGUILayout.ObjectField(refObjects.refAnimController, typeof(AnimatorController), true, GUILayout.Height(20f));
+        ReferenceObjects.refAnimController = (AnimatorController)EditorGUILayout.ObjectField(ReferenceObjects.refAnimController, typeof(AnimatorController), true, GUILayout.Height(20f));
 
         //VRCExpressionParameters
         GUILayout.Label("VRC EXPRESSION PARAMETERS", EditorStyles.boldLabel);
-        refObjects.vrcParam = (VRCExpressionParameters)EditorGUILayout.ObjectField(refObjects.vrcParam, typeof(VRCExpressionParameters), true, GUILayout.Height(20f));
+        ReferenceObjects.vrcParam = (VRCExpressionParameters)EditorGUILayout.ObjectField(ReferenceObjects.vrcParam, typeof(VRCExpressionParameters), true, GUILayout.Height(20f));
 
         //VRCExpressionMenu
         GUILayout.Label("VRC EXPRESISON MENU", EditorStyles.boldLabel);
-        refObjects.vrcMenu = (VRCExpressionsMenu)EditorGUILayout.ObjectField(refObjects.vrcMenu, typeof(VRCExpressionsMenu), true, GUILayout.Height(20f));
+        ReferenceObjects.vrcMenu = (VRCExpressionsMenu)EditorGUILayout.ObjectField(ReferenceObjects.vrcMenu, typeof(VRCExpressionsMenu), true, GUILayout.Height(20f));
         EditorGUILayout.EndVertical();
 
         GUILayout.Space(10);
@@ -121,15 +120,15 @@ public class AutoToggleCreator : EditorWindow
         SerializedProperty toggleObjectsProperty = so.FindProperty("toggleObjects");
         EditorGUILayout.PropertyField(toggleObjectsProperty, true);
         GUILayout.Space(10f);
-        GUILayout.Label("Toggles will be written to:\n" + refObjects.saveDir + "\nThis can be changed under Advanced settings.", EditorStyles.helpBox);
+        GUILayout.Label("Toggles will be written to:\n" + ReferenceObjects.saveDir + "\nThis can be changed under Advanced settings.", EditorStyles.helpBox);
 
-        if (refObjects.refAnimController != true)
+        if (ReferenceObjects.refAnimController != true)
         {
             GUILayout.Label("Minimum reqires a animation controller to proceed", redLabel);
         }
 
-        //using (new EditorGUI.DisabledScope((refObjects.refGameObject && refObjects.refAnimController && refObjects.vrcParam && refObjects.vrcMenu) != true))
-        using (new EditorGUI.DisabledScope(refObjects.refAnimController != true))
+        //using (new EditorGUI.DisabledScope((ReferenceObjects.refGameObject && ReferenceObjects.refAnimController && ReferenceObjects.vrcParam && ReferenceObjects.vrcMenu) != true))
+        using (new EditorGUI.DisabledScope(ReferenceObjects.refAnimController != true))
 
         {
             //pressCreate = GUILayout.Button("Create Toggles!", GUILayout.Height(40f));
@@ -137,19 +136,27 @@ public class AutoToggleCreator : EditorWindow
             {
                 checkSaveDir(); //Sets the save directory
                 validateGameObjectList(); //Ruimentary way to remove empty gameobject from the toggles list to prevent issues.
-                if (refObjects.refGameObject != null)
+                if (ReferenceObjects.refGameObject != null)
                 {
                     CreateClips(); //Creates the Animation Clips needed for toggles.
                 }
-                if (refObjects.refAnimController != null)
+                if (ReferenceObjects.refAnimController != null)
                 {
                     ApplyToAnimator(); //Handles making toggle bool property, layer setup, states and transitions.
+                    if (Settings.createExclusiveToggle)
+                    {
+                        ExclusiveStateConfig();
+                    }
+                    if (Settings.createFallbackState)
+                    {
+                        FallBackCreator();
+                    }
                 }
-                if (refObjects.vrcParam != null)
+                if (ReferenceObjects.vrcParam != null)
                 {
                     MakeVRCParameter(); //Makes a new VRCParameter list, populates it with existing parameters, then adds new ones for each toggle.
                 }
-                if (refObjects.vrcMenu != null)
+                if (ReferenceObjects.vrcMenu != null)
                 {
                     MakeVRCMenu(); //Adds toggles to menu
                 }
@@ -160,18 +167,29 @@ public class AutoToggleCreator : EditorWindow
         GUILayout.Space(10f);
         GUILayout.BeginVertical();
 
-        showPosition = EditorGUILayout.BeginFoldoutHeaderGroup(showPosition, "Advanced settings");
-        if (showPosition)
+        Settings.showAdvanced = EditorGUILayout.BeginFoldoutHeaderGroup(Settings.showAdvanced, "Advanced settings");
+        if (Settings.showAdvanced)
         {
             GUILayout.Label("Output subdirectory (relative to controller):", EditorStyles.boldLabel);
-            saveSubfolder = GUILayout.TextField(saveSubfolder, GUILayout.Height(20f));
+            Settings.saveSubfolder = GUILayout.TextField(Settings.saveSubfolder, GUILayout.Height(20f));
             //Toggle to save VRCParameter values
-            parameterSave = (bool)EditorGUILayout.ToggleLeft("Set VRC Parameters to save state?", parameterSave, EditorStyles.boldLabel);
+            Settings.parameterSave = (bool)EditorGUILayout.ToggleLeft("Set VRC Parameters to save state?", Settings.parameterSave, EditorStyles.boldLabel);
+            Settings.createExclusiveToggle = (bool)EditorGUILayout.ToggleLeft("Make the object toggles exclusive (only one active at the time)?", Settings.createExclusiveToggle, EditorStyles.boldLabel);
+            Settings.createFallbackState = (bool)EditorGUILayout.ToggleLeft("Create fallback (if all toggles are off set first object active)?", Settings.createFallbackState, EditorStyles.boldLabel);
+
+        }
+        EditorGUILayout.EndFoldoutHeaderGroup();
+        GUILayout.Space(10f);
+        Settings.showAdvancedDangerous = EditorGUILayout.BeginFoldoutHeaderGroup(Settings.showAdvancedDangerous, "Dangerous settings");
+        if (Settings.showAdvancedDangerous)
+        {
+            Settings.recreateLayers = (bool)EditorGUILayout.ToggleLeft("Recreate layers?", Settings.recreateLayers, EditorStyles.boldLabel);
+            GUILayout.Label("WARNING: This will delete layers with the same name as the objects!",redLabel);
         }
         EditorGUILayout.EndFoldoutHeaderGroup();
         GUILayout.EndVertical();
 
-        refObjects.generateSavePath();
+        ReferenceObjects.generateSavePath();
         so.ApplyModifiedProperties();
 
 
@@ -192,7 +210,7 @@ public class AutoToggleCreator : EditorWindow
             //Clip for ON
             AnimationClip toggleClipOn = new AnimationClip();
             toggleClipOn.SetCurve
-                (GetGameObjectPath(gameObject.transform).Substring(refObjects.refGameObject.gameObject.name.Length + 1),
+                (GetGameObjectPath(gameObject.transform).Substring(ReferenceObjects.refGameObject.gameObject.name.Length + 1),
                 typeof(GameObject),
                 "m_IsActive",
                 new AnimationCurve(new Keyframe(0, 1, 0, 0),
@@ -202,7 +220,7 @@ public class AutoToggleCreator : EditorWindow
             //Clip for OFF
             AnimationClip toggleClipOff = new AnimationClip();
             toggleClipOff.SetCurve
-                (GetGameObjectPath(gameObject.transform).Substring(refObjects.refGameObject.gameObject.name.Length + 1),
+                (GetGameObjectPath(gameObject.transform).Substring(ReferenceObjects.refGameObject.gameObject.name.Length + 1),
                 typeof(GameObject),
                 "m_IsActive",
                 new AnimationCurve(new Keyframe(0, 0, 0, 0),
@@ -210,8 +228,8 @@ public class AutoToggleCreator : EditorWindow
                 );
 
             //Save on animation clips
-            AssetDatabase.CreateAsset(toggleClipOn, $"{refObjects.saveDir}/{gameObject.name}-On.anim");
-            AssetDatabase.CreateAsset(toggleClipOff, $"{refObjects.saveDir}/{gameObject.name}-Off.anim");
+            AssetDatabase.CreateAsset(toggleClipOn, $"{ReferenceObjects.saveDir}/{gameObject.name}-On.anim");
+            AssetDatabase.CreateAsset(toggleClipOff, $"{ReferenceObjects.saveDir}/{gameObject.name}-Off.anim");
             AssetDatabase.SaveAssets();
         }
     }
@@ -219,9 +237,9 @@ public class AutoToggleCreator : EditorWindow
     private void ApplyToAnimator()
     {
         //Check if a parameter already exists with that name. If so, Ignore adding parameter.
-        if (!doesNameExistParam("TrackingType", refObjects.refAnimController.parameters))
+        if (!doesNameExistParam("TrackingType", ReferenceObjects.refAnimController.parameters))
         {
-            refObjects.refAnimController.AddParameter("TrackingType", AnimatorControllerParameterType.Int);
+            ReferenceObjects.refAnimController.AddParameter("TrackingType", AnimatorControllerParameterType.Int);
         }
         foreach (GameObject gameObject in toggleObjects)
         {
@@ -229,13 +247,21 @@ public class AutoToggleCreator : EditorWindow
             string currentParamName = gameObjectName + "Toggle";
 
             //Check if a parameter already exists with that name. If so, Ignore adding parameter.
-            if (!doesNameExistParam(currentParamName, refObjects.refAnimController.parameters))
+            if (!doesNameExistParam(currentParamName, ReferenceObjects.refAnimController.parameters))
             {
-                refObjects.refAnimController.AddParameter(currentParamName, AnimatorControllerParameterType.Bool);
+                ReferenceObjects.refAnimController.AddParameter(currentParamName, AnimatorControllerParameterType.Bool);
             }
 
             string currentlayername = gameObjectName.Replace(".", "_");
             //Check if a layer already exists with that name. If so, Ignore adding layer.
+            if (Settings.recreateLayers == true)
+            {
+                int layerIndex = FindAnimationLayerIndex(currentlayername);
+                if (layerIndex != 0)
+                {
+                    ReferenceObjects.refAnimController.RemoveLayer(layerIndex);
+                }
+            }
             AnimatorControllerLayer currentLayer = FindAnimationLayer(currentlayername);
             if (currentLayer == null)
             {
@@ -247,33 +273,34 @@ public class AutoToggleCreator : EditorWindow
                 AnimatorState Idle = new AnimatorState
                 {
                     name = currentLayer.stateMachine.MakeUniqueStateName("Idle-WaitForInit"),
-                    writeDefaultValues = writeDefaults,
+                    writeDefaultValues = Settings.writeDefaults,
                     hideFlags = HideFlags.HideInHierarchy
                 };
                 currentLayer.stateMachine.AddState(Idle, new Vector3(260, 240, 0));
-                AssetDatabase.AddObjectToAsset(Idle, refObjects.assetContainerPath);
+                AssetDatabase.AddObjectToAsset(Idle, ReferenceObjects.assetContainerPath);
+
 
                 //Creating On state
                 AnimatorState stateOn = new AnimatorState
                 {
                     name = currentLayer.stateMachine.MakeUniqueStateName($"{gameObjectName} On"),
-                    motion = (Motion)AssetDatabase.LoadAssetAtPath($"{refObjects.saveDir}/{gameObjectName}-On.anim", typeof(Motion)),
-                    writeDefaultValues = writeDefaults,
+                    motion = (Motion)AssetDatabase.LoadAssetAtPath($"{ReferenceObjects.saveDir}/{gameObjectName}-On.anim", typeof(Motion)),
+                    writeDefaultValues = Settings.writeDefaults,
                     hideFlags = HideFlags.HideInHierarchy
                 };
                 currentLayer.stateMachine.AddState(stateOn, new Vector3(260, 120, 0));
-                AssetDatabase.AddObjectToAsset(stateOn, refObjects.assetContainerPath);
+                AssetDatabase.AddObjectToAsset(stateOn, ReferenceObjects.assetContainerPath);
 
                 //Create Off state
                 AnimatorState stateOff = new AnimatorState
                 {
                     name = currentLayer.stateMachine.MakeUniqueStateName($"{gameObjectName} Off"),
-                    motion = (Motion)AssetDatabase.LoadAssetAtPath($"{refObjects.saveDir}/{gameObjectName}-Off.anim", typeof(Motion)),
-                    writeDefaultValues = writeDefaults,
+                    motion = (Motion)AssetDatabase.LoadAssetAtPath($"{ReferenceObjects.saveDir}/{gameObjectName}-Off.anim", typeof(Motion)),
+                    writeDefaultValues = Settings.writeDefaults,
                     hideFlags = HideFlags.HideInHierarchy
                 };
                 currentLayer.stateMachine.AddState(stateOff, new Vector3(520, 120, 0));
-                AssetDatabase.AddObjectToAsset(stateOff, refObjects.assetContainerPath);
+                AssetDatabase.AddObjectToAsset(stateOff, ReferenceObjects.assetContainerPath);
 
 
                 //Transition states
@@ -289,31 +316,115 @@ public class AutoToggleCreator : EditorWindow
                 AnimatorCondition[] InitWaitOn = new AnimatorCondition[2];
                 InitWaitOn[0] = MakeIfTrueCondition(currentParamName);
                 InitWaitOn[1] = TrackingNot0;
-                MakeTransition(currentLayer.stateMachine.states[0].state, currentLayer.stateMachine.states[1].state, "InitWait-OnState", InitWaitOn, refObjects.assetContainerPath);
+                MakeTransition(currentLayer.stateMachine.states[0].state, currentLayer.stateMachine.states[1].state, "InitWait-OnState", InitWaitOn, ReferenceObjects.assetContainerPath);
 
                 // Add transition Init -> Off
                 AnimatorCondition[] InitWaitOff = new AnimatorCondition[2];
                 InitWaitOff[0] = MakeIfFalseCondition(currentParamName);
                 InitWaitOff[1] = TrackingNot0;
-                MakeTransition(currentLayer.stateMachine.states[0].state, currentLayer.stateMachine.states[2].state, "InitWait-OffState", InitWaitOff, refObjects.assetContainerPath);
+                MakeTransition(currentLayer.stateMachine.states[0].state, currentLayer.stateMachine.states[2].state, "InitWait-OffState", InitWaitOff, ReferenceObjects.assetContainerPath);
 
                 //On <-> Off transitions
                 //Off -> On Transition
                 AnimatorCondition[] OffOnCondition = new AnimatorCondition[1];
                 OffOnCondition[0] = MakeIfTrueCondition(currentParamName);
-                MakeTransition(currentLayer.stateMachine.states[2].state, currentLayer.stateMachine.states[1].state, "Off->On", OffOnCondition, refObjects.assetContainerPath);
-                
+                MakeTransition(currentLayer.stateMachine.states[2].state, currentLayer.stateMachine.states[1].state, "Off->On", OffOnCondition, ReferenceObjects.assetContainerPath);
+
                 //Off -> On Transition
                 AnimatorCondition[] OnOffCondition = new AnimatorCondition[1];
                 OnOffCondition[0] = MakeIfFalseCondition(currentParamName);
-                MakeTransition(currentLayer.stateMachine.states[1].state, currentLayer.stateMachine.states[2].state, "On->Off", OnOffCondition, refObjects.assetContainerPath);
+                MakeTransition(currentLayer.stateMachine.states[1].state, currentLayer.stateMachine.states[2].state, "On->Off", OnOffCondition, ReferenceObjects.assetContainerPath);
 
             }
         }
 
-        EditorUtility.SetDirty(refObjects.refAnimController);
+        EditorUtility.SetDirty(ReferenceObjects.refAnimController);
         AssetDatabase.SaveAssets();
 
+    }
+    private void ExclusiveStateConfig()
+    {
+        List<(string objname, string togglname, string layername)> paramNamesList = new List<(string, string, string)>();
+        foreach (GameObject gameobj in toggleObjects)
+        {
+            string gameobjName = gameobj.name;
+            paramNamesList.Add((gameobjName, gameobjName + "Toggle", gameobjName.Replace(".", "_")));
+        }
+
+        foreach (var param in paramNamesList)
+        {
+            AnimatorControllerLayer currentLayer = FindAnimationLayer(param.layername);
+            (string toggleName, float toggleValue)[] toggleList = new (string, float)[paramNamesList.Count - 1];
+            int i = 0;
+            foreach (var toggle in paramNamesList)
+            {
+                if (toggle.objname != param.objname)
+                {
+                    toggleList[i].toggleName = toggle.togglname;
+                    toggleList[i].toggleValue = 0;
+                    i++;
+                }
+            }
+            StateMachineBehaviour[] machineBehaviours = new StateMachineBehaviour[1];
+            machineBehaviours[0] = MakeVRCParameterSetDriver(toggleList);
+            currentLayer.stateMachine.states[1].state.behaviours = machineBehaviours;
+        }
+    }
+    private void FallBackCreator()
+    {
+        List<(string objname, string togglname, string layername)> paramNamesList = new List<(string, string, string)>();
+        foreach (GameObject gameobj in toggleObjects)
+        {
+            string gameobjName = gameobj.name;
+            paramNamesList.Add((gameobjName, gameobjName + "Toggle", gameobjName.Replace(".", "_")));
+        }
+
+        AnimatorControllerLayer layerWithFallback = FindAnimationLayer(paramNamesList[0].layername);
+
+        AnimatorState Fallback = new AnimatorState
+        {
+            name = layerWithFallback.stateMachine.MakeUniqueStateName("Fallback"),
+            writeDefaultValues = Settings.writeDefaults,
+            hideFlags = HideFlags.HideInHierarchy
+        };
+        layerWithFallback.stateMachine.AddState(Fallback, new Vector3(260, 0, 0));
+        AssetDatabase.AddObjectToAsset(Fallback, ReferenceObjects.assetContainerPath);
+
+        AnimatorCondition[] offToFallbackState = new AnimatorCondition[paramNamesList.Count];
+        for (int i = 0; i < paramNamesList.Count; i++)
+        {
+            offToFallbackState[i] = MakeIfFalseCondition(paramNamesList[i].togglname);
+        }
+        MakeTransition(layerWithFallback.stateMachine.states[2].state, layerWithFallback.stateMachine.states[3].state, "Off -> Fallback", offToFallbackState, ReferenceObjects.assetContainerPath);
+
+        // Fallback to On
+        AnimatorCondition[] OnOffCondition = new AnimatorCondition[1];
+        OnOffCondition[0] = MakeIfTrueCondition(paramNamesList[0].togglname);
+        MakeTransition(layerWithFallback.stateMachine.states[3].state, layerWithFallback.stateMachine.states[1].state, "Fallback -> On", OnOffCondition, ReferenceObjects.assetContainerPath);
+
+        (string toggleName, float toggleValue)[] toggleList = new (string, float)[1];
+        toggleList[0].toggleName = paramNamesList[0].togglname;
+        toggleList[0].toggleValue = 1;
+        StateMachineBehaviour[] machineBehaviours = new StateMachineBehaviour[1];
+        machineBehaviours[0] = MakeVRCParameterSetDriver(toggleList);
+        layerWithFallback.stateMachine.states[3].state.behaviours = machineBehaviours;
+    }
+
+    private static VRCAvatarParameterDriver MakeVRCParameterSetDriver((string toggleName, float toggleValue)[] paramAndBool)
+    {
+        VRCAvatarParameterDriver parameterDriver = ScriptableObject.CreateInstance<VRCAvatarParameterDriver>();
+        parameterDriver.name = "VRC ParameterDriver";
+        foreach (var parameter in paramAndBool)
+        {
+            VRCAvatarParameterDriver.Parameter driverParameter = new VRCAvatarParameterDriver.Parameter
+            {
+                name = parameter.toggleName,
+                type = VRCAvatarParameterDriver.ChangeType.Set,
+                value = parameter.toggleValue,
+            };
+            parameterDriver.parameters.Add(driverParameter);
+        }
+        return parameterDriver;
     }
     private static AnimatorCondition MakeIfTrueCondition(string boolParameterName)
     {
@@ -351,7 +462,7 @@ public class AutoToggleCreator : EditorWindow
     }
     private AnimatorControllerLayer FindAnimationLayer(string name)
     {
-        foreach (AnimatorControllerLayer layer in refObjects.refAnimController.layers)
+        foreach (AnimatorControllerLayer layer in ReferenceObjects.refAnimController.layers)
         {
             if (layer.name == name)
             {
@@ -360,10 +471,21 @@ public class AutoToggleCreator : EditorWindow
         }
         return null;
     }
+    private static int FindAnimationLayerIndex(string name)
+    {
+        for (int i = 0; i < ReferenceObjects.refAnimController.layers.Length; i++)
+        {
+            if (ReferenceObjects.refAnimController.layers[i].name == name)
+            {
+                return i;
+            }
+        }
+        return 0;
+    }
 
     private void AddLayerWithWeight(string layerName, float weightWhenCreating)
     {
-        var layerUniqueName = refObjects.refAnimController.MakeUniqueLayerName(layerName);
+        var layerUniqueName = ReferenceObjects.refAnimController.MakeUniqueLayerName(layerName);
         var newLayer = new AnimatorControllerLayer
         {
             name = layerUniqueName,
@@ -374,13 +496,13 @@ public class AutoToggleCreator : EditorWindow
             name = layerUniqueName,
             hideFlags = HideFlags.HideInHierarchy
         };
-        AssetDatabase.AddObjectToAsset(newLayer.stateMachine, AssetDatabase.GetAssetPath(refObjects.refAnimController));
-        refObjects.refAnimController.AddLayer(newLayer);
+        AssetDatabase.AddObjectToAsset(newLayer.stateMachine, AssetDatabase.GetAssetPath(ReferenceObjects.refAnimController));
+        ReferenceObjects.refAnimController.AddLayer(newLayer);
     }
 
     private void MakeVRCParameter()
     {
-        int ogparamlength = refObjects.vrcParam.parameters.Length;
+        int ogparamlength = ReferenceObjects.vrcParam.parameters.Length;
         int newitemlength = toggleObjects.Count;
         int counter = ogparamlength;
         int nullcounter = 0;
@@ -388,9 +510,9 @@ public class AutoToggleCreator : EditorWindow
         VRCExpressionParameters.Parameter[] newListFull = new VRCExpressionParameters.Parameter[ogparamlength + newitemlength];
 
         //Add parameters that were already on the SO
-        for (int i = 0; i < refObjects.vrcParam.parameters.Length; i++)
+        for (int i = 0; i < ReferenceObjects.vrcParam.parameters.Length; i++)
         {
-            newListFull[i] = refObjects.vrcParam.parameters[i];
+            newListFull[i] = ReferenceObjects.vrcParam.parameters[i];
         }
 
         foreach (GameObject gameObject in toggleObjects)
@@ -405,7 +527,7 @@ public class AutoToggleCreator : EditorWindow
             };
 
             //Check to see if parameter is saved
-            if (parameterSave == true) { newParam.saved = true; } else { newParam.saved = false; }
+            if (Settings.parameterSave == true) { newParam.saved = true; } else { newParam.saved = false; }
             if (!doesNameExistVRCParam(newParam.name, newListFull))
             {
                 newListFull[counter] = newParam;
@@ -424,8 +546,8 @@ public class AutoToggleCreator : EditorWindow
 
         if (vrcParamSanityCheck(finalNewList))
         {
-            refObjects.vrcParam.parameters = finalNewList;
-            EditorUtility.SetDirty(refObjects.vrcParam);
+            ReferenceObjects.vrcParam.parameters = finalNewList;
+            EditorUtility.SetDirty(ReferenceObjects.vrcParam);
         }
         else
         {
@@ -446,7 +568,6 @@ public class AutoToggleCreator : EditorWindow
 
     private void MakeVRCMenu()
     {
-        int maxmenuitems = 8;
         foreach (GameObject gameObject in toggleObjects)
         {
             VRCExpressionsMenu.Control controlItem = new VRCExpressionsMenu.Control
@@ -457,28 +578,28 @@ public class AutoToggleCreator : EditorWindow
             };
             controlItem.parameter.name = gameObject.name + "Toggle";
 
-            if (!doesNameExistVRCMenu(controlItem.name, refObjects.vrcMenu.controls))
+            if (!doesNameExistVRCMenu(controlItem.name, ReferenceObjects.vrcMenu.controls))
             {
-                if (refObjects.vrcMenu.controls.Count < maxmenuitems)
+                if (ReferenceObjects.vrcMenu.controls.Count < maxVRCMenuItems)
                 {
-                    refObjects.vrcMenu.controls.Add(controlItem);
+                    ReferenceObjects.vrcMenu.controls.Add(controlItem);
                 }
                 else
                 {
-                    Debug.LogWarning("Unable to add: " + controlItem.name + ". To menu: " + refObjects.vrcMenu.name + ". Too many entires! Max " + maxmenuitems + " allowed!");
+                    Debug.LogWarning("Unable to add: " + controlItem.name + ". To menu: " + ReferenceObjects.vrcMenu.name + ". Too many entires! Max " + maxVRCMenuItems + " allowed!");
                 }
             }
         }
 
-        EditorUtility.SetDirty(refObjects.vrcMenu);
+        EditorUtility.SetDirty(ReferenceObjects.vrcMenu);
     }
 
 
     private void checkSaveDir()
     {
-        if (!Directory.Exists(refObjects.saveDir))
+        if (!Directory.Exists(ReferenceObjects.saveDir))
         {
-            Directory.CreateDirectory(refObjects.saveDir);
+            Directory.CreateDirectory(ReferenceObjects.saveDir);
         }
     }
     private void validateGameObjectList()
