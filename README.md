@@ -28,11 +28,6 @@ These settings are considered dangerous because they will overwrite/delete stuff
 - ***Recreate Layers:*** This will delete any layer existing with the object name and recreate it with the scripted setup.  
 This will delete any customization already done on the layer so be careful!
 # Current known Issues
-- Random edge cases where error can occur due to names, order or invalid objects.
-- Error sometimes when selecting multiple game objects in scene. Does not effect anything but NO CLUE why :/
-
-# ~~Video Example of Use~~
-Video is out of date with current state.
 
 # How It Works
 What this editor tool does is generate an animation clip and keyframes inside of it for the corresponding toggle object name (also checks to see if the default should be activating or deactivating the object).  
