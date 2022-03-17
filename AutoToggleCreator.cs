@@ -10,6 +10,7 @@ public class AutoToggleCreator : EditorWindow
 {
     private const int maxVRCMenuItems = 8;
     public List<GameObject> toggleObjects = new List<GameObject>();
+    private List<ObjectListConfig> objectList = new List<ObjectListConfig>();
 
     private static class ReferenceObjects
     {
@@ -42,6 +43,24 @@ public class AutoToggleCreator : EditorWindow
         public static bool recreateLayers = false;
         public static string saveSubfolder = "ToggleAnimations";
     }
+
+    private class ObjectListConfig
+    {
+        public string objname;
+        public string paramname;
+        public string layername;
+        public string menuname;
+
+        public ObjectListConfig(string objname, string paramname, string layername, string menuname)
+        {
+            this.objname = objname;
+            this.paramname = paramname;
+            this.layername = layername;
+            this.menuname = menuname;
+
+        }
+    }
+
 
     [MenuItem("Tools/AutoToggleCreator")]
 
@@ -151,6 +170,7 @@ public class AutoToggleCreator : EditorWindow
             {
                 checkSaveDir(); //Sets the save directory
                 validateGameObjectList(); //Ruimentary way to remove empty gameobject from the toggles list to prevent issues.
+                objectList = MakeStateConfigList();
                 if (ReferenceObjects.refGameObject != null)
                 {
                     CreateClips(); //Creates the Animation Clips needed for toggles.
@@ -219,6 +239,17 @@ public class AutoToggleCreator : EditorWindow
 
     }
 
+    private List<ObjectListConfig> MakeStateConfigList()
+    {
+        List<ObjectListConfig> list = new List<ObjectListConfig>();
+        foreach (GameObject gameobj in toggleObjects)
+        {
+            string gameobjName = gameobj.name;
+            list.Add(new ObjectListConfig(gameobjName, gameobjName + "Toggle", gameobjName.Replace(".", "_"), gameobjName + " Toggle"));
+        }
+        return list;
+    }
+
     private void CreateClips()
     {
         foreach (GameObject gameObject in toggleObjects)
@@ -251,39 +282,41 @@ public class AutoToggleCreator : EditorWindow
         }
     }
 
+
+
+
     private void ApplyToAnimator()
     {
+        
+
         //Check if a parameter already exists with that name. If so, Ignore adding parameter.
         if (!doesNameExistParam("TrackingType", ReferenceObjects.refAnimController.parameters))
         {
             ReferenceObjects.refAnimController.AddParameter("TrackingType", AnimatorControllerParameterType.Int);
         }
-        foreach (GameObject gameObject in toggleObjects)
-        {
-            string gameObjectName = gameObject.name;
-            string currentParamName = gameObjectName + "Toggle";
 
+        foreach (ObjectListConfig objectListItem in objectList)
+        {
             //Check if a parameter already exists with that name. If so, Ignore adding parameter.
-            if (!doesNameExistParam(currentParamName, ReferenceObjects.refAnimController.parameters))
+            if (!doesNameExistParam(objectListItem.paramname, ReferenceObjects.refAnimController.parameters))
             {
-                ReferenceObjects.refAnimController.AddParameter(currentParamName, AnimatorControllerParameterType.Bool);
+                ReferenceObjects.refAnimController.AddParameter(objectListItem.paramname, AnimatorControllerParameterType.Bool);
             }
 
-            string currentlayername = gameObjectName.Replace(".", "_");
             //Check if a layer already exists with that name. If so, Ignore adding layer.
             if (Settings.recreateLayers == true)
             {
-                int layerIndex = FindAnimationLayerIndex(currentlayername);
+                int layerIndex = FindAnimationLayerIndex(objectListItem.layername);
                 if (layerIndex != 0)
                 {
                     ReferenceObjects.refAnimController.RemoveLayer(layerIndex);
                 }
             }
-            AnimatorControllerLayer currentLayer = FindAnimationLayer(currentlayername);
+            AnimatorControllerLayer currentLayer = FindAnimationLayer(objectListItem.layername);
             if (currentLayer == null)
             {
-                AddLayerWithWeight(currentlayername, 1f);
-                currentLayer = FindAnimationLayer(currentlayername);
+                AddLayerWithWeight(objectListItem.layername, 1f);
+                currentLayer = FindAnimationLayer(objectListItem.layername);
 
                 //Create our states first
                 //Create a wait for Init state (prevents toggles being on/off when someone loads their avatar)
@@ -300,8 +333,8 @@ public class AutoToggleCreator : EditorWindow
                 //Creating On state
                 AnimatorState stateOn = new AnimatorState
                 {
-                    name = currentLayer.stateMachine.MakeUniqueStateName($"{gameObjectName} On"),
-                    motion = (Motion)AssetDatabase.LoadAssetAtPath($"{ReferenceObjects.saveDir}/{gameObjectName}-On.anim", typeof(Motion)),
+                    name = currentLayer.stateMachine.MakeUniqueStateName($"{objectListItem.objname} On"),
+                    motion = (Motion)AssetDatabase.LoadAssetAtPath($"{ReferenceObjects.saveDir}/{objectListItem.objname}-On.anim", typeof(Motion)),
                     writeDefaultValues = Settings.writeDefaults,
                     hideFlags = HideFlags.HideInHierarchy
                 };
@@ -311,8 +344,8 @@ public class AutoToggleCreator : EditorWindow
                 //Create Off state
                 AnimatorState stateOff = new AnimatorState
                 {
-                    name = currentLayer.stateMachine.MakeUniqueStateName($"{gameObjectName} Off"),
-                    motion = (Motion)AssetDatabase.LoadAssetAtPath($"{ReferenceObjects.saveDir}/{gameObjectName}-Off.anim", typeof(Motion)),
+                    name = currentLayer.stateMachine.MakeUniqueStateName($"{objectListItem.objname} Off"),
+                    motion = (Motion)AssetDatabase.LoadAssetAtPath($"{ReferenceObjects.saveDir}/{objectListItem.objname}-Off.anim", typeof(Motion)),
                     writeDefaultValues = Settings.writeDefaults,
                     hideFlags = HideFlags.HideInHierarchy
                 };
@@ -331,25 +364,25 @@ public class AutoToggleCreator : EditorWindow
                 };
                 // Add transition Init -> On
                 AnimatorCondition[] InitWaitOn = new AnimatorCondition[2];
-                InitWaitOn[0] = MakeIfTrueCondition(currentParamName);
+                InitWaitOn[0] = MakeIfTrueCondition(objectListItem.paramname);
                 InitWaitOn[1] = TrackingNot0;
                 MakeTransition(currentLayer.stateMachine.states[0].state, currentLayer.stateMachine.states[1].state, "InitWait-OnState", InitWaitOn);
 
                 // Add transition Init -> Off
                 AnimatorCondition[] InitWaitOff = new AnimatorCondition[2];
-                InitWaitOff[0] = MakeIfFalseCondition(currentParamName);
+                InitWaitOff[0] = MakeIfFalseCondition(objectListItem.paramname);
                 InitWaitOff[1] = TrackingNot0;
                 MakeTransition(currentLayer.stateMachine.states[0].state, currentLayer.stateMachine.states[2].state, "InitWait-OffState", InitWaitOff);
 
                 //On <-> Off transitions
                 //Off -> On Transition
                 AnimatorCondition[] OffOnCondition = new AnimatorCondition[1];
-                OffOnCondition[0] = MakeIfTrueCondition(currentParamName);
+                OffOnCondition[0] = MakeIfTrueCondition(objectListItem.paramname);
                 MakeTransition(currentLayer.stateMachine.states[2].state, currentLayer.stateMachine.states[1].state, "Off->On", OffOnCondition);
 
                 //Off -> On Transition
                 AnimatorCondition[] OnOffCondition = new AnimatorCondition[1];
-                OnOffCondition[0] = MakeIfFalseCondition(currentParamName);
+                OnOffCondition[0] = MakeIfFalseCondition(objectListItem.paramname);
                 MakeTransition(currentLayer.stateMachine.states[1].state, currentLayer.stateMachine.states[2].state, "On->Off", OnOffCondition);
 
             }
@@ -359,25 +392,22 @@ public class AutoToggleCreator : EditorWindow
         AssetDatabase.SaveAssets();
 
     }
+
+
     private void ExclusiveStateConfig()
     {
-        List<(string objname, string togglname, string layername)> paramNamesList = new List<(string, string, string)>();
-        foreach (GameObject gameobj in toggleObjects)
-        {
-            string gameobjName = gameobj.name;
-            paramNamesList.Add((gameobjName, gameobjName + "Toggle", gameobjName.Replace(".", "_")));
-        }
+        
 
-        foreach (var param in paramNamesList)
+        foreach (ObjectListConfig objectListItem in objectList)
         {
-            AnimatorControllerLayer currentLayer = FindAnimationLayer(param.layername);
-            (string toggleName, float toggleValue)[] toggleList = new (string, float)[paramNamesList.Count - 1];
+            AnimatorControllerLayer currentLayer = FindAnimationLayer(objectListItem.layername);
+            (string toggleName, float toggleValue)[] toggleList = new (string, float)[objectList.Count - 1];
             int i = 0;
-            foreach (var toggle in paramNamesList)
+            foreach (ObjectListConfig toggle in objectList)
             {
-                if (toggle.objname != param.objname)
+                if (toggle.objname != objectListItem.objname)
                 {
-                    toggleList[i].toggleName = toggle.togglname;
+                    toggleList[i].toggleName = toggle.paramname;
                     toggleList[i].toggleValue = 0;
                     i++;
                 }
@@ -390,16 +420,11 @@ public class AutoToggleCreator : EditorWindow
         EditorUtility.SetDirty(ReferenceObjects.refAnimController);
         AssetDatabase.SaveAssets();
     }
+
     private void FallBackCreator()
     {
-        List<(string objname, string togglname, string layername)> paramNamesList = new List<(string, string, string)>();
-        foreach (GameObject gameobj in toggleObjects)
-        {
-            string gameobjName = gameobj.name;
-            paramNamesList.Add((gameobjName, gameobjName + "Toggle", gameobjName.Replace(".", "_")));
-        }
 
-        AnimatorControllerLayer layerWithFallback = FindAnimationLayer(paramNamesList[0].layername);
+        AnimatorControllerLayer layerWithFallback = FindAnimationLayer(objectList[0].layername);
 
         AnimatorState Fallback = new AnimatorState
         {
@@ -410,20 +435,20 @@ public class AutoToggleCreator : EditorWindow
         layerWithFallback.stateMachine.AddState(Fallback, new Vector3(260, 0, 0));
         AssetDatabase.AddObjectToAsset(Fallback, ReferenceObjects.assetContainerPath);
 
-        AnimatorCondition[] offToFallbackState = new AnimatorCondition[paramNamesList.Count];
-        for (int i = 0; i < paramNamesList.Count; i++)
+        AnimatorCondition[] offToFallbackState = new AnimatorCondition[objectList.Count];
+        for (int i = 0; i < objectList.Count; i++)
         {
-            offToFallbackState[i] = MakeIfFalseCondition(paramNamesList[i].togglname);
+            offToFallbackState[i] = MakeIfFalseCondition(objectList[i].paramname);
         }
         MakeTransition(layerWithFallback.stateMachine.states[2].state, layerWithFallback.stateMachine.states[3].state, "Off -> Fallback", offToFallbackState);
 
         // Fallback to On
         AnimatorCondition[] OnOffCondition = new AnimatorCondition[1];
-        OnOffCondition[0] = MakeIfTrueCondition(paramNamesList[0].togglname);
+        OnOffCondition[0] = MakeIfTrueCondition(objectList[0].paramname);
         MakeTransition(layerWithFallback.stateMachine.states[3].state, layerWithFallback.stateMachine.states[1].state, "Fallback -> On", OnOffCondition);
 
         (string toggleName, float toggleValue)[] toggleList = new (string, float)[1];
-        toggleList[0].toggleName = paramNamesList[0].togglname;
+        toggleList[0].toggleName = objectList[0].paramname;
         toggleList[0].toggleValue = 1;
         StateMachineBehaviour[] machineBehaviours = new StateMachineBehaviour[1];
         machineBehaviours[0] = MakeVRCParameterSetDriver(toggleList);
@@ -539,13 +564,14 @@ public class AutoToggleCreator : EditorWindow
             newListFull[i] = ReferenceObjects.vrcParam.parameters[i];
         }
 
-        foreach (GameObject gameObject in toggleObjects)
+
+        foreach (ObjectListConfig objectListItem in objectList)
         {
             //Make new parameter to add to list
             VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter
             {
                 //Modify parameter according to user settings and object name
-                name = gameObject.name + "Toggle",
+                name = objectListItem.paramname,
                 valueType = VRCExpressionParameters.ValueType.Bool,
                 defaultValue = 0
             };
@@ -559,7 +585,6 @@ public class AutoToggleCreator : EditorWindow
             }
             else { nullcounter++; }
         }
-
 
         int finallenght = newListFull.Length - nullcounter;
         VRCExpressionParameters.Parameter[] finalNewList = new VRCExpressionParameters.Parameter[finallenght];
@@ -592,15 +617,16 @@ public class AutoToggleCreator : EditorWindow
 
     private void MakeVRCMenu()
     {
-        foreach (GameObject gameObject in toggleObjects)
+        
+        foreach (ObjectListConfig objectListItem in objectList)
         {
             VRCExpressionsMenu.Control controlItem = new VRCExpressionsMenu.Control
             {
-                name = gameObject.name + " Toggle",
+                name = objectListItem.menuname,
                 type = VRCExpressionsMenu.Control.ControlType.Toggle,
                 parameter = new VRCExpressionsMenu.Control.Parameter()
             };
-            controlItem.parameter.name = gameObject.name + "Toggle";
+            controlItem.parameter.name = objectListItem.paramname;
 
             if (!doesNameExistVRCMenu(controlItem.name, ReferenceObjects.vrcMenu.controls))
             {
@@ -610,7 +636,7 @@ public class AutoToggleCreator : EditorWindow
                 }
                 else
                 {
-                    Debug.LogWarning("Unable to add: " + controlItem.name + ". To menu: " + ReferenceObjects.vrcMenu.name + ". Too many entires! Max " + maxVRCMenuItems + " allowed!");
+                    Debug.LogWarning($"Unable to add: {controlItem.name}. To menu: {ReferenceObjects.vrcMenu.name}. Too many entires! Max {maxVRCMenuItems} allowed!");
                 }
             }
         }
