@@ -53,31 +53,44 @@ public class AutoToggleCreator : EditorWindow
 
     }
 
-    bool missingAvatarDesc;
+    void OnSelectionChange()
+    {
+        Repaint();
+    }
+
+    bool disableAutoFill;
+
     public void OnGUI()
     {
         GUIStyle redLabel = new GUIStyle(EditorStyles.label);
         redLabel.normal.textColor = Color.red;
-        EditorGUILayout.Space(15);
-        if (GUILayout.Button("Auto-Fill with Selected Avatar", GUILayout.Height(30f)))
-        {
-            if (Selection.activeTransform.GetComponent<VRCAvatarDescriptor>() == null)
-            {
-                missingAvatarDesc = true;
-                return;
-            }
-            missingAvatarDesc = false;
-            GameObject SelectedObj = Selection.activeGameObject;
-            ReferenceObjects.refGameObject = SelectedObj;
-            ReferenceObjects.refAnimController = (AnimatorController)SelectedObj.GetComponent<VRCAvatarDescriptor>().baseAnimationLayers[4].animatorController;
-            ReferenceObjects.vrcParam = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionParameters;
-            ReferenceObjects.vrcMenu = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionsMenu;
 
+        EditorGUILayout.Space(10);
+
+        if (Selection.activeTransform != null)
+        {
+            disableAutoFill = Selection.activeTransform.GetComponent<VRCAvatarDescriptor>() == null;
         }
-        if (missingAvatarDesc)
+        else
+        {
+            disableAutoFill = true;
+        }
+        using (new EditorGUI.DisabledScope(disableAutoFill))
+        {
+            if (GUILayout.Button("Auto-Fill with Selected Avatar", GUILayout.Height(30f)))
+            {
+                GameObject SelectedObj = Selection.activeGameObject;
+                ReferenceObjects.refGameObject = SelectedObj;
+                ReferenceObjects.refAnimController = (AnimatorController)SelectedObj.GetComponent<VRCAvatarDescriptor>().baseAnimationLayers[4].animatorController;
+                ReferenceObjects.vrcParam = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionParameters;
+                ReferenceObjects.vrcMenu = SelectedObj.GetComponent<VRCAvatarDescriptor>().expressionsMenu;
+
+            }
+        }
+        if (disableAutoFill)
         {
             EditorGUILayout.BeginVertical();
-            GUILayout.Label("GameObject requires a VRCAvatarDescriptor for auto-fill.", redLabel);
+            GUILayout.Label("Selected object requires a VRCAvatarDescriptor for auto-fill.", EditorStyles.label);
             EditorGUILayout.EndVertical();
         }
 
@@ -85,51 +98,53 @@ public class AutoToggleCreator : EditorWindow
 
         EditorGUILayout.BeginVertical();
         //Avatar Animator
-        GUILayout.Label("ROOT GAMEOBJECT", EditorStyles.boldLabel);
+        GUILayout.Label("Animation base reference GameObject", EditorStyles.boldLabel);
         ReferenceObjects.refGameObject = (GameObject)EditorGUILayout.ObjectField(ReferenceObjects.refGameObject, typeof(GameObject), true, GUILayout.Height(20f));
 
         //FX Animator Controller
-        GUILayout.Label("FX AVATAR CONTROLLER", EditorStyles.boldLabel);
+        GUILayout.Label("FX Animation Controller", EditorStyles.boldLabel);
         ReferenceObjects.refAnimController = (AnimatorController)EditorGUILayout.ObjectField(ReferenceObjects.refAnimController, typeof(AnimatorController), true, GUILayout.Height(20f));
 
         //VRCExpressionParameters
-        GUILayout.Label("VRC EXPRESSION PARAMETERS", EditorStyles.boldLabel);
+        GUILayout.Label("VRC Expression Parameters", EditorStyles.boldLabel);
         ReferenceObjects.vrcParam = (VRCExpressionParameters)EditorGUILayout.ObjectField(ReferenceObjects.vrcParam, typeof(VRCExpressionParameters), true, GUILayout.Height(20f));
 
         //VRCExpressionMenu
-        GUILayout.Label("VRC EXPRESISON MENU", EditorStyles.boldLabel);
+        GUILayout.Label("VRC Expressions Menu", EditorStyles.boldLabel);
         ReferenceObjects.vrcMenu = (VRCExpressionsMenu)EditorGUILayout.ObjectField(ReferenceObjects.vrcMenu, typeof(VRCExpressionsMenu), true, GUILayout.Height(20f));
         EditorGUILayout.EndVertical();
 
         GUILayout.Space(10);
 
         //Toggle Object List
-        GUILayout.Label("Objects to Toggle On and Off:", EditorStyles.boldLabel);
+        GUILayout.Label("Objects create toggles for:", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Add"))
+        if (GUILayout.Button("Add slot"))
         {
             toggleObjects.Add(null);
         }
-        if (GUILayout.Button("Remove"))
+        if (GUILayout.Button("Remove slot"))
         {
             toggleObjects.RemoveAt(toggleObjects.Count - 1);
         }
         EditorGUILayout.EndHorizontal();
+
         ScriptableObject target = this;
         SerializedObject so = new SerializedObject(target);
         SerializedProperty toggleObjectsProperty = so.FindProperty("toggleObjects");
         EditorGUILayout.PropertyField(toggleObjectsProperty, true);
-        GUILayout.Space(10f);
-        GUILayout.Label("Toggles will be written to:\n" + ReferenceObjects.saveDir + "\nThis can be changed under Advanced settings.", EditorStyles.helpBox);
 
+
+        GUILayout.Space(15f);
+        GUILayout.Label($"Toggles will be written to:\n{ReferenceObjects.saveDir}\nThis can be changed under Advanced settings.", EditorStyles.helpBox);
+
+        GUILayout.Space(10f);
         if (ReferenceObjects.refAnimController != true)
         {
             GUILayout.Label("Minimum reqires a animation controller to proceed", redLabel);
         }
 
-        //using (new EditorGUI.DisabledScope((ReferenceObjects.refGameObject && ReferenceObjects.refAnimController && ReferenceObjects.vrcParam && ReferenceObjects.vrcMenu) != true))
         using (new EditorGUI.DisabledScope(ReferenceObjects.refAnimController != true))
-
         {
             //pressCreate = GUILayout.Button("Create Toggles!", GUILayout.Height(40f));
             if (GUILayout.Button("Create Toggles!", GUILayout.Height(40f)))
@@ -184,7 +199,7 @@ public class AutoToggleCreator : EditorWindow
         if (Settings.showAdvancedDangerous)
         {
             Settings.recreateLayers = (bool)EditorGUILayout.ToggleLeft("Recreate layers?", Settings.recreateLayers, EditorStyles.boldLabel);
-            GUILayout.Label("WARNING: This will delete layers with the same name as the objects!",redLabel);
+            GUILayout.Label("WARNING: This will delete layers with the same name as the objects!", redLabel);
         }
         EditorGUILayout.EndFoldoutHeaderGroup();
         GUILayout.EndVertical();
@@ -200,6 +215,8 @@ public class AutoToggleCreator : EditorWindow
         {
             
         }*/
+        GUILayout.TextArea("TIP!\nFor instructions, updates or to report issues, check out the GitHub!\nhttps://github.com/SuperFlue/VRC-Auto-Toggle-Creator", EditorStyles.helpBox);
+
     }
 
     private void CreateClips()
