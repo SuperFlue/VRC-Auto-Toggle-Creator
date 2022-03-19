@@ -9,6 +9,8 @@ using UnityEditor.Animations;
 public class AutoToggleCreator : EditorWindow
 {
     private const int maxVRCMenuItems = 8;
+    private const string menuprefix = "";
+    private const string paramprefix = "";
     public List<GameObject> toggleObjects = new List<GameObject>();
     private List<ObjectListConfig> objectList = new List<ObjectListConfig>();
 
@@ -44,23 +46,49 @@ public class AutoToggleCreator : EditorWindow
         public static string saveSubfolder = "ToggleAnimations";
     }
 
+
     private class ObjectListConfig
     {
+        public GameObject gameobject;
         public string objname;
         public string paramname;
         public string layername;
         public string menuname;
+        public string gameobjectpath;
+        static readonly string suffix;
+        static readonly string paramprefix;
+        static readonly string layerprefix;
+        static readonly string menuprefix;
 
-        public ObjectListConfig(string objname, string paramname, string layername, string menuname)
+        static ObjectListConfig()
         {
-            this.objname = objname;
-            this.paramname = paramname;
-            this.layername = layername;
-            this.menuname = menuname;
+            paramprefix = AutoToggleCreator.paramprefix;
+            layerprefix = AutoToggleCreator.paramprefix;
+            menuprefix = AutoToggleCreator.menuprefix;
+            suffix = "Toggle";
+        }
 
+        public ObjectListConfig(GameObject gameobject)
+        {
+            this.gameobject = gameobject;
+            this.objname = gameobject.name;
+            this.paramname = $"{paramprefix}{objname}{suffix}";
+            this.layername = $"{layerprefix}{objname.Replace(".", "_")}";
+            this.menuname = $"{menuprefix}{objname} {suffix}";
+            this.gameobjectpath = GetGameObjectRelativePath(this.gameobject.transform);
+        }
+        private string GetGameObjectRelativePath(Transform transform)
+        {
+            string path = transform.name;
+            while (transform.parent != null)
+            {
+                transform = transform.parent;
+                path = transform.name + "/" + path;
+            }
+            path = path.Substring(ReferenceObjects.refGameObject.gameObject.name.Length + 1);
+            return path;
         }
     }
-
 
     [MenuItem("Tools/AutoToggleCreator")]
 
@@ -244,21 +272,20 @@ public class AutoToggleCreator : EditorWindow
         List<ObjectListConfig> list = new List<ObjectListConfig>();
         foreach (GameObject gameobj in toggleObjects)
         {
-            string gameobjName = gameobj.name;
-            list.Add(new ObjectListConfig(gameobjName, gameobjName + "Toggle", gameobjName.Replace(".", "_"), gameobjName + " Toggle"));
+            list.Add(new ObjectListConfig(gameobj));
         }
         return list;
     }
 
     private void CreateClips()
     {
-        foreach (GameObject gameObject in toggleObjects)
+        foreach (ObjectListConfig objectListItem in objectList)
         {
             //Make animation clips for on and off state and set curves for game objects on and off
             //Clip for ON
             AnimationClip toggleClipOn = new AnimationClip();
             toggleClipOn.SetCurve
-                (GetGameObjectPath(gameObject.transform).Substring(ReferenceObjects.refGameObject.gameObject.name.Length + 1),
+                (objectListItem.gameobjectpath,
                 typeof(GameObject),
                 "m_IsActive",
                 new AnimationCurve(new Keyframe(0, 1, 0, 0),
@@ -268,7 +295,7 @@ public class AutoToggleCreator : EditorWindow
             //Clip for OFF
             AnimationClip toggleClipOff = new AnimationClip();
             toggleClipOff.SetCurve
-                (GetGameObjectPath(gameObject.transform).Substring(ReferenceObjects.refGameObject.gameObject.name.Length + 1),
+                (objectListItem.gameobjectpath,
                 typeof(GameObject),
                 "m_IsActive",
                 new AnimationCurve(new Keyframe(0, 0, 0, 0),
@@ -276,8 +303,8 @@ public class AutoToggleCreator : EditorWindow
                 );
 
             //Save on animation clips
-            AssetDatabase.CreateAsset(toggleClipOn, $"{ReferenceObjects.saveDir}/{gameObject.name}-On.anim");
-            AssetDatabase.CreateAsset(toggleClipOff, $"{ReferenceObjects.saveDir}/{gameObject.name}-Off.anim");
+            AssetDatabase.CreateAsset(toggleClipOn, $"{ReferenceObjects.saveDir}/{objectListItem.objname}-On.anim");
+            AssetDatabase.CreateAsset(toggleClipOff, $"{ReferenceObjects.saveDir}/{objectListItem.objname}-Off.anim");
             AssetDatabase.SaveAssets();
         }
     }
@@ -715,7 +742,6 @@ public class AutoToggleCreator : EditorWindow
         }
         return path;
     }
-
 }
 
 #endif
