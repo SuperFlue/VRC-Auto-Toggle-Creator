@@ -502,6 +502,10 @@ public class AutoToggleCreator : EditorWindow
         {
             name = transitionName,
             hasExitTime = false,
+            exitTime = 0,
+            offset = 0,
+            hasFixedDuration = true,
+            duration = 0.1f,
             destinationState = destinationState,
             hideFlags = HideFlags.HideInHierarchy,
             conditions = conditions
