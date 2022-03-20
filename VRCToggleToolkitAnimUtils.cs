@@ -5,23 +5,26 @@ using System;
 using VRC.SDK3.Avatars.Components;
 using UnityEditor.Animations;
 
-namespace AutoToggleCreator.Util
+namespace VRCToggleToolkit.Util
 {
-    public static class ATCAnimUtils
+    public static class VRCToggleToolkitAnimUtils
     {
         public static void makeGameObjectToggleCurve(ref AnimationClip clip, string gameobjectpath, bool enable)
         {
             float enablefloat = Convert.ToInt32(enable);
             clip.SetCurve(gameobjectpath, typeof(GameObject), "m_IsActive", TwoKeyframesWithValue(enablefloat));
         }
+
         public static void addBlendShapeAnimCurves(ref AnimationClip clip, string gameobjectpath, string blendshape, float value)
         {
             clip.SetCurve(gameobjectpath, typeof(SkinnedMeshRenderer), blendshape, TwoKeyframesWithValue(value));
         }
+
         public static AnimationCurve TwoKeyframesWithValue(float value)
         {
             return new AnimationCurve(new Keyframe(0, value), new Keyframe(1 / 60f, value));
         }
+
         public static VRCAvatarParameterDriver MakeVRCParameterSetDriver((string toggleName, float toggleValue)[] paramAndBool, string assetContainerPath)
         {
             VRCAvatarParameterDriver parameterDriver = ScriptableObject.CreateInstance<VRCAvatarParameterDriver>();
@@ -40,6 +43,7 @@ namespace AutoToggleCreator.Util
             AssetDatabase.AddObjectToAsset(parameterDriver, assetContainerPath);
             return parameterDriver;
         }
+
         public static AnimatorCondition MakeIfTrueCondition(string boolParameterName)
         {
             AnimatorCondition animatorCondition = new AnimatorCondition
@@ -50,6 +54,7 @@ namespace AutoToggleCreator.Util
             };
             return animatorCondition;
         }
+
         public static AnimatorCondition MakeIfFalseCondition(string boolParameterName)
         {
             AnimatorCondition animatorCondition = new AnimatorCondition
@@ -78,6 +83,7 @@ namespace AutoToggleCreator.Util
             sourceState.AddTransition(newTransition);
             AssetDatabase.AddObjectToAsset(newTransition, assetContainerPath);
         }
+
         public static void AddLayerWithWeight(string layerName, float weightWhenCreating, ref AnimatorController controller, string assetContainerPath)
         {
             var layerUniqueName = controller.MakeUniqueLayerName(layerName);

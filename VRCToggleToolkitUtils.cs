@@ -5,9 +5,72 @@ using System.Collections.Generic;
 using VRC.SDK3.Avatars.ScriptableObjects;
 using UnityEditor.Animations;
 
-namespace AutoToggleCreator.Util
+namespace VRCToggleToolkit.Util
 {
-    public static class ATCUtils
+    [System.Serializable]
+    public class BlendShapeListItem
+    {
+        public string blendshapeName;
+        public float value;
+        public string skinnedMeshName;
+        public BlendShapeListItem(string meshName, string blendshapename)
+        {
+            skinnedMeshName = meshName;
+            blendshapeName = blendshapename;
+            value = 0;
+        }
+        public BlendShapeListItem(string meshName, string blendshapename, float setvalue)
+        {
+            skinnedMeshName = meshName;
+            blendshapeName = blendshapename;
+            value = setvalue;
+        }
+    }
+
+    public class ObjectListConfig
+    {
+        public GameObject gameobject;
+        public string objname;
+        public string paramname;
+        public string layername;
+        public string menuname;
+        public string gameobjectpath;
+        static readonly string suffix;
+        static readonly string paramprefix;
+        static readonly string layerprefix;
+        static readonly string menuprefix;
+
+        static ObjectListConfig()
+        {
+            paramprefix = Main.Settings.paramprefix;
+            layerprefix = Main.Settings.layerprefix;
+            menuprefix = Main.Settings.menuprefix;
+            suffix = "Toggle";
+        }
+
+        public ObjectListConfig(GameObject gameobject)
+        {
+            this.gameobject = gameobject;
+            this.objname = gameobject.name;
+            this.paramname = $"{paramprefix}{objname}{suffix}";
+            this.layername = $"{layerprefix}{objname.Replace(".", "_")}";
+            this.menuname = $"{menuprefix}{objname} {suffix}";
+            this.gameobjectpath = GetGameObjectRelativePath(this.gameobject.transform);
+        }
+        private string GetGameObjectRelativePath(Transform transform)
+        {
+            string path = transform.name;
+            while (transform.parent != null)
+            {
+                transform = transform.parent;
+                path = transform.name + "/" + path;
+            }
+            path = path.Substring(this.objname.Length + 1);
+            return path;
+        }
+    }
+
+    public static class VRCToggleToolkitUtils
     {
         public static List<ObjectListConfig> MakeStateConfigList(List<GameObject> toggleObjects)
         {
@@ -120,6 +183,7 @@ namespace AutoToggleCreator.Util
             }
             return false;
         }
+
         public static List<BlendShapeListItem> getBlendShapes(SkinnedMeshRenderer skinnedMesh)
         {
             List<BlendShapeListItem> blendShapeList = new List<BlendShapeListItem>();
@@ -127,72 +191,12 @@ namespace AutoToggleCreator.Util
             int blendShapeCount = skinnedMesh.sharedMesh.blendShapeCount;
             for (int i = 0; i < blendShapeCount; i++)
             {
-                blendShapeList.Add(new BlendShapeListItem(meshName, skinnedMesh.sharedMesh.GetBlendShapeName(i),0));
+                blendShapeList.Add(new BlendShapeListItem(meshName, skinnedMesh.sharedMesh.GetBlendShapeName(i), 0));
             }
-            
+
             return blendShapeList;
         }
-    }
-    public class BlendShapeListItem
-    {
-        public string skinnedMeshName;
-        public string blendshapeName;
-        public float value;
-        public BlendShapeListItem(string meshName, string blendshapename)
-        {
-            skinnedMeshName = meshName;
-            blendshapeName = blendshapename;
-            value = 0;
-        }
-        public BlendShapeListItem(string meshName, string blendshapename, float setvalue)
-        {
-            skinnedMeshName = meshName;
-            blendshapeName = blendshapename;
-            value = setvalue;
-        }
-    }
-    public class ObjectListConfig
-    {
-        public GameObject gameobject;
-        public string objname;
-        public string paramname;
-        public string layername;
-        public string menuname;
-        public string gameobjectpath;
-        static readonly string suffix;
-        static readonly string paramprefix;
-        static readonly string layerprefix;
-        static readonly string menuprefix;
-
-        static ObjectListConfig()
-        {
-            paramprefix = Main.Settings.paramprefix;
-            layerprefix = Main.Settings.layerprefix;
-            menuprefix = Main.Settings.menuprefix;
-            suffix = "Toggle";
-        }
-
-        public ObjectListConfig(GameObject gameobject)
-        {
-            this.gameobject = gameobject;
-            this.objname = gameobject.name;
-            this.paramname = $"{paramprefix}{objname}{suffix}";
-            this.layername = $"{layerprefix}{objname.Replace(".", "_")}";
-            this.menuname = $"{menuprefix}{objname} {suffix}";
-            this.gameobjectpath = GetGameObjectRelativePath(this.gameobject.transform);
-        }
-        private string GetGameObjectRelativePath(Transform transform)
-        {
-            string path = transform.name;
-            while (transform.parent != null)
-            {
-                transform = transform.parent;
-                path = transform.name + "/" + path;
-            }
-            path = path.Substring(this.objname.Length + 1);
-            return path;
-        }
-    }
+    }  
 }
 
 #endif
