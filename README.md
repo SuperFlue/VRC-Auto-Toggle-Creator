@@ -1,4 +1,4 @@
-# VRChat Auto Toggle Creator
+# VRChat Toggle Toolkit
 A Unity Editor tool to automatically setup the lengthy process of making animations, setting up a controller, and filling out the VRChat expression assets.
 While this is made with VRChat in mind, that is only the tail end of the script and can be used for a variety of tasks related to generating animations and configuring animators.
 # Download
@@ -6,12 +6,12 @@ While this is made with VRChat in mind, that is only the tail end of the script 
 https://github.com/SuperFlue/VRC-Auto-Toggle-Creator/releases
 
 # How to Use
-1. Download ***AutoToggleCreator.cs*** from the download page linked above.
-2. Drag the script anywhere into your asset folder in unity and open the menu from the top Tools/AutoToggleCreator
-4. Make sure your avatar has the VRC_Descriptor and has the FXAnimationController, VRCExpressionsMenu and VRCExpressionParameters assets attached then click the auto fill button at the top. (Or drag in the four fields manually).
-5. Next, drag in your game objects you would like to make a toggle for.
-6. When that is done, you can click the "Create Toggles!" button and it will create the animation, layers, parameters and expression items needed.
-7. Upload to VRChat and you should have a separate toggle for each game object you assigned!
+1. Import the Unity package from the the latest release and import into you project.
+2. Open the tool from **Tools -> VRCToggleToolkit -> AutoToggleCreator**
+3. Make sure your avatar has the VRC_Descriptor and has the FXAnimationController, VRCExpressionsMenu and VRCExpressionParameters assets attached then click the auto fill button at the top. (Or drag in the four fields manually).
+4. Next, drag in your game objects you would like to make a toggle for.
+5. When that is done, you can click the "Create Toggles!" button and it will create the animation, layers, parameters and expression items needed.
+6. Upload to VRChat and you should have a separate toggle for each game object you assigned!
 
 ***Tip:***  
 If you want to have toggles over multiple menus (or just have way too many of them).  
@@ -36,7 +36,7 @@ Once that is taken care of all the smaller settings/values set, the VRCExpressio
 
 Every animation toggle also gets created with a initialization state, to prevent toggles from going weird when you load in your avatar.
 
-Note! By default this creates layers with Write Defaults off according VRC best practice.
+**Note!** By default this creates layers with Write Defaults off according VRC best practice.
 Depending on you avatar you might have to tweak this.
 
 # Credits
