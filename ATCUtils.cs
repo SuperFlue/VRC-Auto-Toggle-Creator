@@ -166,9 +166,9 @@ namespace AutoToggleCreator.Util
 
         static ObjectListConfig()
         {
-            paramprefix = "";
-            layerprefix = "";
-            menuprefix = "";
+            paramprefix = Main.Settings.paramprefix;
+            layerprefix = Main.Settings.layerprefix;
+            menuprefix = Main.Settings.menuprefix;
             suffix = "Toggle";
         }
 

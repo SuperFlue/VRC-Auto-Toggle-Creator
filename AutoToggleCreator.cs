@@ -11,45 +11,46 @@ using AutoToggleCreator.Util;
 
 namespace AutoToggleCreator.Main
 {
-    public class AutoToggleCreator : EditorWindow
+    public static class ReferenceObjects
     {
-        private const int maxVRCMenuItems = 8;
-        private const string menuprefix = "";
-        private const string paramprefix = "";
-        public List<GameObject> toggleObjects = new List<GameObject>();
-        private List<ObjectListConfig> objectList = new List<ObjectListConfig>();
+        public static GameObject refGameObject;
+        public static AnimatorController refAnimController;
+        public static VRCExpressionParameters vrcParam;
+        public static VRCExpressionsMenu vrcMenu;
+        public static string saveDir;
+        public static string assetContainerPath;
 
-        private static class ReferenceObjects
+        public static void generateSavePath()
         {
-            public static GameObject refGameObject;
-            public static AnimatorController refAnimController;
-            public static VRCExpressionParameters vrcParam;
-            public static VRCExpressionsMenu vrcMenu;
-            public static string saveDir;
-            public static string assetContainerPath;
-
-            public static void generateSavePath()
+            string controllerpath;
+            if (refAnimController != null)
             {
-                string controllerpath;
-                if (refAnimController != null)
-                {
-                    assetContainerPath = AssetDatabase.GetAssetPath(refAnimController);
-                    controllerpath = assetContainerPath.Substring(0, assetContainerPath.Length - refAnimController.name.Length - 11);
-                    saveDir = controllerpath + Settings.saveSubfolder + "/";
-                }
+                assetContainerPath = AssetDatabase.GetAssetPath(refAnimController);
+                controllerpath = assetContainerPath.Substring(0, assetContainerPath.Length - refAnimController.name.Length - 11);
+                saveDir = controllerpath + Settings.saveSubfolder + "/";
             }
         }
-        private static class Settings
-        {
-            public static bool showAdvanced = false;
-            public static bool showAdvancedDangerous = false;
-            public static bool parameterSave = false;
-            public static bool writeDefaults = false;
-            public static bool createExclusiveToggle = false;
-            public static bool createFallbackState = false;
-            public static bool recreateLayers = false;
-            public static string saveSubfolder = "ToggleAnimations";
-        }
+    }
+    public static class Settings
+    {
+        public static bool showAdvanced = false;
+        public static bool showAdvancedDangerous = false;
+        public static bool parameterSave = false;
+        public static bool writeDefaults = false;
+        public static bool createExclusiveToggle = false;
+        public static bool createFallbackState = false;
+        public static bool recreateLayers = false;
+        public static string saveSubfolder = "ToggleAnimations";
+        public static string paramprefix = "";
+        public static string layerprefix = "";
+        public static string menuprefix = "";
+    }
+
+
+    public class AutoToggleCreator : EditorWindow
+    {
+        private List<GameObject> toggleObjects = new List<GameObject>();
+        private List<ObjectListConfig> objectList = new List<ObjectListConfig>();
 
         [MenuItem("Tools/AutoToggleCreator")]
 
@@ -217,33 +218,9 @@ namespace AutoToggleCreator.Main
             ReferenceObjects.generateSavePath();
             so.ApplyModifiedProperties();
 
-
-            // Debug button for easy testing
-/*            bool debugbutton;
-            debugbutton = GUILayout.Button("Debug", GUILayout.Height(40f));
-            if(debugbutton)
-            {
-                //objectList = MakeStateConfigList();
-                var test = ATCUtils.getBlendShapes(Selection.activeGameObject.GetComponent<SkinnedMeshRenderer>());
-                //test.ForEach(this.gameobjectName = Selection.activeGameObject.name);
-                bool test2 = false;
-                //clipDebug();
-            }*/
-
             GUILayout.TextArea("TIP!\nFor instructions, updates or to report issues, check out the GitHub!\nhttps://github.com/SuperFlue/VRC-Auto-Toggle-Creator", EditorStyles.helpBox);
 
         }
-
-  /*      public static List<ObjectListConfig> MakeStateConfigList(List<GameObject> toggleObjects)
-        {
-            List<ObjectListConfig> list = new List<ObjectListConfig>();
-            foreach (GameObject gameobj in toggleObjects)
-            {
-                list.Add(new ObjectListConfig(gameobj));
-                
-            }
-            return list;
-        }*/
 
         private void CreateClips()
         {
@@ -265,34 +242,6 @@ namespace AutoToggleCreator.Main
             }
         }
 
-        private void CreateClips2()
-        {
-            //Make animation clips for on and off state and set curves for game objects on and off
-            //Clip for ON
-            AnimationClip toggleClipOn = new AnimationClip();
-            //Clip for OFF
-            AnimationClip toggleClipOff = new AnimationClip();
-            foreach (ObjectListConfig objectListItem in objectList)
-            {
-                ATCAnimUtils.makeGameObjectToggleCurve(ref toggleClipOn, objectListItem.gameobjectpath, true);
-                ATCAnimUtils.makeGameObjectToggleCurve(ref toggleClipOff, objectListItem.gameobjectpath, false);
-            }
-            //Save on animation clips
-            AssetDatabase.CreateAsset(toggleClipOn, $"{ReferenceObjects.saveDir}/{objectList[0].objname}-On.anim");
-            AssetDatabase.CreateAsset(toggleClipOff, $"{ReferenceObjects.saveDir}/{objectList[0].objname}-Off.anim");
-            AssetDatabase.SaveAssets();
-        }
-        private void clipDebug()
-        {
-            //Make animation clips for on and off state and set curves for game objects on and off
-            //Clip for ON
-            AnimationClip toggleClipOn = new AnimationClip();
-            ATCAnimUtils.addBlendShapeAnimCurves(ref toggleClipOn, "Body", "blendShape.blink", 50);
-            
-            //Save on animation clips
-            AssetDatabase.CreateAsset(toggleClipOn, $"{ReferenceObjects.saveDir}/blendtest.anim");
-            AssetDatabase.SaveAssets();
-        }
 
 
         private void ApplyToAnimator()
@@ -518,7 +467,7 @@ namespace AutoToggleCreator.Main
 
         private void MakeVRCMenu()
         {
-
+            int maxVRCMenuItems = 8;
             foreach (ObjectListConfig objectListItem in objectList)
             {
                 VRCExpressionsMenu.Control controlItem = new VRCExpressionsMenu.Control
@@ -541,7 +490,6 @@ namespace AutoToggleCreator.Main
                     }
                 }
             }
-
             EditorUtility.SetDirty(ReferenceObjects.vrcMenu);
         }
     }
