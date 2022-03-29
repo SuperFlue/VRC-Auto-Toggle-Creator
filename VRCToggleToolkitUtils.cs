@@ -65,7 +65,7 @@ namespace VRCToggleToolkit.Util
                 transform = transform.parent;
                 path = transform.name + "/" + path;
             }
-            path = path.Substring(this.objname.Length + 1);
+            path = path.Substring(transform.name.Length + 1);
             return path;
         }
     }
