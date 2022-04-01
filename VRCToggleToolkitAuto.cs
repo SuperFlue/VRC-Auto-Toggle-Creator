@@ -172,6 +172,7 @@ namespace VRCToggleToolkit.Main
                     if (ReferenceObjects.refGameObject != null)
                     {
                         CreateClips(); //Creates the Animation Clips needed for toggles.
+                        CreateNullClip(); // Creates an Animation Clip with an invalid path needed for stability. 
                     }
                     if (ReferenceObjects.refAnimController != null)
                     {
@@ -249,6 +250,16 @@ namespace VRCToggleToolkit.Main
             }
         }
 
+        private void CreateNullClip()
+        {
+            // Animation for the empty states. This is needed because a WD off state without an animation will behave like it is set with Write Defaults on.
+            AnimationClip nullAnimation = new AnimationClip();
+            nullAnimation.SetCurve("null_path/null", typeof(GameObject), "m_IsActive", AnimationCurve.Linear(0,0,0,1));
+            AssetDatabase.CreateAsset(nullAnimation, $"{ReferenceObjects.saveDir}/nullAnimation.anim");
+            AssetDatabase.SaveAssets();
+
+        }
+
 
 
         private void ApplyToAnimator()
@@ -287,6 +298,7 @@ namespace VRCToggleToolkit.Main
                     AnimatorState Idle = new AnimatorState
                     {
                         name = currentLayer.stateMachine.MakeUniqueStateName("Idle-WaitForInit"),
+                        motion = (Motion)AssetDatabase.LoadAssetAtPath($"{ReferenceObjects.saveDir}/nullAnimation.anim", typeof(Motion)),
                         writeDefaultValues = Settings.writeDefaults,
                         hideFlags = HideFlags.HideInHierarchy
                     };
@@ -389,6 +401,7 @@ namespace VRCToggleToolkit.Main
             AnimatorState Fallback = new AnimatorState
             {
                 name = layerWithFallback.stateMachine.MakeUniqueStateName("Fallback"),
+                motion = (Motion)AssetDatabase.LoadAssetAtPath($"{ReferenceObjects.saveDir}/nullAnimation.anim", typeof(Motion)),
                 writeDefaultValues = Settings.writeDefaults,
                 hideFlags = HideFlags.HideInHierarchy
             };
