@@ -60,12 +60,11 @@ namespace VRCToggleToolkit.Util
         private string GetGameObjectRelativePath(Transform transform)
         {
             string path = transform.name;
-            while (transform.parent != null)
+            while (transform.parent.parent != null)
             {
                 transform = transform.parent;
                 path = transform.name + "/" + path;
             }
-            path = path.Substring(this.objname.Length + 1);
             return path;
         }
     }
