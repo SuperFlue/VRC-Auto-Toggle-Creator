@@ -11,5 +11,6 @@
   "url": "https://github.com/SuperFlue/VRCToggleToolkit.git",
   "legacyFolders": {
     "Assets\\Editor\\AutoToggleCreator": "38c8de39c51cc364499ff4d095ceeeb0"
-  }
+  },
+  "type": "tool"
 }
