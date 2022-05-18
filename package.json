@@ -5,8 +5,8 @@
   "unity": "2019.4",
   "description": "Tool for automatically creating avatar toggles.",
   "gitDependencies": {
-    "com.vrchat.base": "https://github.com/vrchat/com.vrchat.base.git",
-    "com.vrchat.avatars": "https://github.com/vrchat/com.vrchat.avatars.git"
+    "com.vrchat.base": "https://github.com/vrchat/packages.git?path=/packages/com.vrchat.base",
+    "com.vrchat.avatars": "https://github.com/vrchat/packages?path=/packages/com.vrchat.avatars"
   },
   "url": "https://github.com/SuperFlue/VRCToggleToolkit.git",
   "legacyFolders": {
