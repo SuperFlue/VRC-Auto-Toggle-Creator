@@ -17,6 +17,7 @@ namespace VRCToggleToolkit.Main
         public static AnimatorController refAnimController;
         public static VRCExpressionParameters vrcParam;
         public static VRCExpressionsMenu vrcMenu;
+        public static AnimationClip blankAnimation = (AnimationClip)AssetDatabase.LoadAssetAtPath("Packages/com.superflue.vcrtoggletoolkit/Editor/Resources/BlankAnimation.anim", typeof(AnimationClip));
         public static string saveDir;
         public static string assetContainerPath;
 
@@ -287,6 +288,7 @@ namespace VRCToggleToolkit.Main
                     AnimatorState Idle = new AnimatorState
                     {
                         name = currentLayer.stateMachine.MakeUniqueStateName("Idle-WaitForInit"),
+                        motion = ReferenceObjects.blankAnimation,
                         writeDefaultValues = Settings.writeDefaults,
                         hideFlags = HideFlags.HideInHierarchy
                     };

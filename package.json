@@ -4,6 +4,7 @@
   "version": "0.6.2",
   "unity": "2019.4",
   "description": "Tool for automatically creating avatar toggles.",
+  "type": "tool",
   "gitDependencies": {
     "com.vrchat.base": "https://github.com/vrchat/packages.git?path=/packages/com.vrchat.base",
     "com.vrchat.avatars": "https://github.com/vrchat/packages?path=/packages/com.vrchat.avatars"
@@ -12,5 +13,9 @@
   "legacyFolders": {
     "Assets\\Editor\\AutoToggleCreator": "38c8de39c51cc364499ff4d095ceeeb0"
   },
-  "type": "tool"
+  "legacyFiles" : {
+      "VRCToggleToolkitAnimUtils.cs" : "c65552e569631b445812bbc59f4d117e",
+      "VRCToggleToolkitAuto.cs" : "0250511bf41dac843ab6027c830d002e",
+      "VRCToggleToolkitUtils.cs" : "2390fd9f0268959429328723c3a03b54"
+  }
 }
