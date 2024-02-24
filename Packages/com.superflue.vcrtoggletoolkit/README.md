@@ -2,8 +2,8 @@
 A Unity Editor tool to automatically setup the lengthy process of making animations, setting up a controller, and filling out the VRChat expression assets.
 While this is made with VRChat in mind, that is only the tail end of the script and can be used for a variety of tasks related to generating animations and configuring animators.
 # Download
-Currently prepping the VPM package
-~~https://github.com/SuperFlue/VRCToggleToolkit/releases~~
+
+https://github.com/SuperFlue/VRCToggleToolkit/releases
 
 # How to Use
 1. Import the Unity package from the the latest release and import into you project.

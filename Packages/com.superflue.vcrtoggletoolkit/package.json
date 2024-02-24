@@ -1,0 +1,23 @@
+{
+  "name": "com.superflue.vcrtoggletoolkit",
+  "displayName": "VRC Toogle Toolkit",
+  "version": "0.7.0",
+  "unity": "2022.3",
+  "description": "Tool for automatically creating avatar toggles.",
+  "vpmDependencies": {
+    "com.vrchat.base": "3.5.1",
+    "com.vrchat.avatars": "3.5.1"
+  },
+  "author": {
+    "name": "SuperFlue"
+  },
+  "url": "https://github.com/SuperFlue/VRCToggleToolkit.git",
+  "legacyFolders": {
+    "Assets\\Editor\\AutoToggleCreator": "38c8de39c51cc364499ff4d095ceeeb0"
+  },
+  "legacyFiles": {
+    "VRCToggleToolkitAnimUtils.cs": "c65552e569631b445812bbc59f4d117e",
+    "VRCToggleToolkitAuto.cs": "0250511bf41dac843ab6027c830d002e",
+    "VRCToggleToolkitUtils.cs": "2390fd9f0268959429328723c3a03b54"
+  }
+}

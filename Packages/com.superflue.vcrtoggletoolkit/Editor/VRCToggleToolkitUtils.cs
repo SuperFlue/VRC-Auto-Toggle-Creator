@@ -195,7 +195,7 @@ namespace VRCToggleToolkit.Util
 
             return blendShapeList;
         }
-    }  
+    }
 }
 
 #endif
