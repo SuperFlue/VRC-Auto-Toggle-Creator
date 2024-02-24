@@ -1,12 +1,9 @@
 # VRChat Toggle Toolkit
 A Unity Editor tool to automatically setup the lengthy process of making animations, setting up a controller, and filling out the VRChat expression assets.
 While this is made with VRChat in mind, that is only the tail end of the script and can be used for a variety of tasks related to generating animations and configuring animators.
-# Download
-
-https://github.com/SuperFlue/VRCToggleToolkit/releases
 
 # How to Use
-1. Import the Unity package from the the latest release and import into you project.
+1. Add the tool to your project using VRC Creator Companion from the repository listing [here](https://superflue.github.io/VRCToggleToolkit/).
 2. Open the tool from **Tools -> VRCToggleToolkit -> AutoToggleCreator**
 3. Make sure your avatar has the VRC_Descriptor and has the FXAnimationController, VRCExpressionsMenu and VRCExpressionParameters assets attached then click the auto fill button at the top. (Or drag in the four fields manually).
 4. Next, drag in your game objects you would like to make a toggle for.
@@ -40,5 +37,5 @@ Every animation toggle also gets created with a initialization state, to prevent
 Depending on you avatar you might have to tweak this.
 
 # Credits
-- [CascadianWorks](https://github.com/CascadianWorks) - Original code,
+- [CascadianVR](https://github.com/CascadianVR) - Original code,
 - [Hai](https://github.com/hai-vr) - Some methods borrowed from CGE.

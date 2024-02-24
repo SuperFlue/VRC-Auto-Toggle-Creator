@@ -37,5 +37,5 @@ Every animation toggle also gets created with a initialization state, to prevent
 Depending on you avatar you might have to tweak this.
 
 # Credits
-- [CascadianWorks](https://github.com/CascadianWorks) - Original code,
+- [CascadianVR](https://github.com/CascadianVR) - Original code,
 - [Hai](https://github.com/hai-vr) - Some methods borrowed from CGE.
