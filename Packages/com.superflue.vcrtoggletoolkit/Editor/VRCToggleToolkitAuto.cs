@@ -60,8 +60,12 @@ namespace VRCToggleToolkit.Main
 
     public class VRCToggleToolkitAuto : EditorWindow
     {
+        [SerializeField]
+        [NonReorderable]
         public List<GameObject> toggleObjects = new List<GameObject>();
+
         private List<ObjectListConfig> objectList = new List<ObjectListConfig>();
+
         private bool disableAutoFill;
 
         [MenuItem("Tools/VRCToogleToolkit/AutoToogleCreator")]
@@ -96,7 +100,7 @@ namespace VRCToggleToolkit.Main
             {
                 if (GUILayout.Button("Auto-Fill with Selected Avatar", GUILayout.Height(30f)))
                 {
-                    
+
                     Transform SelectedObj = Selection.activeTransform;
                     ReferenceObjects.refGameObject = SelectedObj.gameObject;
                     ReferenceObjects.refAnimController = (AnimatorController)SelectedObj.GetComponent<VRCAvatarDescriptor>().baseAnimationLayers[4].animatorController;
@@ -150,8 +154,10 @@ namespace VRCToggleToolkit.Main
             ScriptableObject target = this;
             SerializedObject so = new SerializedObject(target);
             SerializedProperty toggleObjectsProperty = so.FindProperty("toggleObjects");
+            //EditorGUILayout.PropertyField(toggleObjectsProperty, true);
             EditorGUILayout.PropertyField(toggleObjectsProperty, true);
 
+            
 
             GUILayout.Space(15f);
             GUILayout.Label($"Toggles will be written to:\n{ReferenceObjects.saveDir}\nThis can be changed under Advanced settings.", EditorStyles.helpBox);
@@ -224,10 +230,10 @@ namespace VRCToggleToolkit.Main
             GUILayout.EndVertical();
 
             ReferenceObjects.generateSavePath();
-            so.ApplyModifiedProperties();
 
             GUILayout.TextArea("TIP!\nFor instructions, updates or to report issues, check out the GitHub!\nhttps://github.com/SuperFlue/VRC-Auto-Toggle-Creator", EditorStyles.helpBox);
 
+            so.ApplyModifiedProperties();
         }
 
         private void CreateClips()
