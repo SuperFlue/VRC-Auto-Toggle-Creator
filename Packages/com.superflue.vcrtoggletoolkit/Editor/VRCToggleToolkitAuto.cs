@@ -391,6 +391,7 @@ namespace VRCToggleToolkit.Main
             AnimatorState Fallback = new AnimatorState
             {
                 name = layerWithFallback.stateMachine.MakeUniqueStateName("Fallback"),
+                motion = ReferenceObjects.blankAnimation,
                 writeDefaultValues = Settings.writeDefaults,
                 hideFlags = HideFlags.HideInHierarchy
             };
